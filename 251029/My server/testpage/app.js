@@ -1,17 +1,246 @@
 // 데모 데이터 (이미지 URL은 자유로 교체)
 const PLACES = [
-  // ...existing data...
+  // 맛집
   {
-    id:"p39", type:"food", city:"제주",
-    name:"제주 고등어구이",
-    rating:4.6, reviews:890, popular:86, recent:20250919,
-    address:"제주시 연동 123-45",
-    price:"15,000~25,000원",
-    signature:{ name:"제주 고등어구이 정식", price:"18,000원" },
-    tags:["고등어구이","제주","로컬맛집","생선구이"],
-    desc:"제주 근해에서 잡은 고등어로만 요리하는 맛집.",
-    img:"https://images.unsplash.com/photo-1580476262798-bddd9f4b7369",
-    map:{lat:33.486, lng:126.485}
+    id:"p1", type:"food", city:"서울",
+    name:"명품 갈비찜",
+    rating:4.8, reviews:1250, popular:95, recent:20251108,
+    address:"서울시 강남구 논현동 123-45",
+    price:"25,000~45,000원",
+    signature:{ name:"프리미엄 갈비찜", price:"35,000원" },
+    tags:["갈비찜","한식","강남맛집","프리미엄"],
+    desc:"20년 전통의 갈비찜 전문점. 특제 양념과 부드러운 육질이 일품.",
+    img:"https://images.unsplash.com/photo-1547592180-85f173990554",
+    map:{lat:37.5126, lng:127.0218},
+    cuisine:"korean"
+  },
+  {
+    id:"p2", type:"food", city:"부산",
+    name:"해운대 회타운",
+    rating:4.7, reviews:980, popular:92, recent:20251107,
+    address:"부산시 해운대구 중동 45-67",
+    price:"30,000~70,000원",
+    signature:{ name:"모둠회 스페셜", price:"50,000원" },
+    tags:["회","해산물","해운대","신선한"],
+    desc:"해운대 앞바다에서 직접 공수한 신선한 회와 해산물을 즐길 수 있는 곳.",
+    img:"https://images.unsplash.com/photo-1579871494447-9811cf80d66c",
+    map:{lat:35.1587, lng:129.1602},
+    cuisine:"korean"
+  },
+  {
+    id:"p3", type:"food", city:"제주",
+    name:"흑돼지 마을",
+    rating:4.9, reviews:2100, popular:98, recent:20251109,
+    address:"제주시 애월읍 애월리 789-10",
+    price:"20,000~40,000원",
+    signature:{ name:"흑돼지 오겹살", price:"28,000원" },
+    tags:["흑돼지","제주","구이","로컬맛집"],
+    desc:"제주 흑돼지를 참숯으로 구워 먹는 정통 흑돼지 전문점.",
+    img:"https://images.unsplash.com/photo-1590947132387-155cc02f3212",
+    map:{lat:33.4616, lng:126.3119},
+    cuisine:"korean"
+  },
+  {
+    id:"p4", type:"food", city:"서울",
+    name:"스시 오마카세",
+    rating:4.6, reviews:450, popular:88, recent:20251105,
+    address:"서울시 종로구 청운동 34-56",
+    price:"150,000~200,000원",
+    signature:{ name:"런치 오마카세", price:"150,000원" },
+    tags:["스시","오마카세","프리미엄","일식"],
+    desc:"최고급 재료로 준비하는 정통 일식 오마카세 레스토랑.",
+    img:"https://images.unsplash.com/photo-1579584425555-c3ce17fd4351",
+    map:{lat:37.5793, lng:126.9682},
+    cuisine:"japanese"
+  },
+  {
+    id:"p5", type:"food", city:"부산",
+    name:"원조 밀면",
+    rating:4.5, reviews:1500, popular:85, recent:20251106,
+    address:"부산시 중구 광복동 78-90",
+    price:"8,000~15,000원",
+    signature:{ name:"밀면", price:"8,000원" },
+    tags:["밀면","부산","로컬맛집","전통"],
+    desc:"3대째 이어오는 부산 대표 밀면 맛집. 진한 육수와 쫄깃한 면발이 특징.",
+    img:"https://images.unsplash.com/photo-1590947132387-155cc02f3212",
+    map:{lat:35.0986, lng:129.0317},
+    cuisine:"korean"
+  },
+
+  // 관광명소
+  {
+    id:"p6", type:"sight", city:"서울",
+    name:"경복궁",
+    rating:4.7, reviews:5000, popular:96, recent:20251108,
+    address:"서울시 종로구 세종로 1-1",
+    price:"성인 3,000원",
+    tags:["궁궐","역사","문화재","조선"],
+    desc:"조선시대 대표 궁궐로, 웅장한 건축미와 아름다운 정원이 특징.",
+    img:"https://images.unsplash.com/photo-1578632292335-df3abbb0d586",
+    map:{lat:37.5796, lng:126.9770}
+  },
+  {
+    id:"p7", type:"sight", city:"부산",
+    name:"해동용궁사",
+    rating:4.6, reviews:3200, popular:90, recent:20251107,
+    address:"부산시 기장군 기장읍 시랑리 416-3",
+    price:"무료",
+    tags:["사찰","바다","풍경","기장"],
+    desc:"바다를 끼고 있는 아름다운 사찰로, 일출 명소로도 유명.",
+    img:"https://images.unsplash.com/photo-1625794084867-8ddd239946b1",
+    map:{lat:35.1880, lng:129.2243}
+  },
+  {
+    id:"p8", type:"sight", city:"제주",
+    name:"성산일출봉",
+    rating:4.8, reviews:6500, popular:97, recent:20251109,
+    address:"제주시 성산읍 성산리",
+    price:"성인 5,000원",
+    tags:["UNESCO","일출","자연","트레킹"],
+    desc:"UNESCO 세계자연유산으로 지정된 제주의 대표적인 화산지형.",
+    img:"https://images.unsplash.com/photo-1590123053695-8b63a1eef293",
+    map:{lat:33.4588, lng:126.9427}
+  },
+  {
+    id:"p9", type:"sight", city:"서울",
+    name:"북촌한옥마을",
+    rating:4.5, reviews:4200, popular:89, recent:20251106,
+    address:"서울시 종로구 계동",
+    price:"무료(일부 체험관 유료)",
+    tags:["한옥","전통","문화","종로"],
+    desc:"600년 역사를 간직한 한옥 마을로, 전통문화 체험이 가능한 곳.",
+    img:"https://images.unsplash.com/photo-1578632292335-df3abbb0d586",
+    map:{lat:37.5830, lng:126.9848}
+  },
+  {
+    id:"p10", type:"sight", city:"부산",
+    name:"감천문화마을",
+    rating:4.4, reviews:2800, popular:87, recent:20251105,
+    address:"부산시 사하구 감천동",
+    price:"무료",
+    tags:["문화마을","예술","포토스팟","사하구"],
+    desc:"색채가 아름다운 부산의 마추픽추로 불리는 문화 예술 마을.",
+    img:"https://images.unsplash.com/photo-1625794084867-8ddd239946b1",
+    map:{lat:35.0947, lng:129.0103}
+  },
+
+  // 카페
+  {
+    id:"p11", type:"cafe", city:"서울",
+    name:"스카이라운지 카페",
+    rating:4.7, reviews:980, popular:93, recent:20251108,
+    address:"서울시 용산구 남산동 123-45",
+    price:"8,000~15,000원",
+    signature:{ name:"시그니처 라떼", price:"8,000원" },
+    tags:["뷰","남산","데이트","브런치"],
+    desc:"남산타워가 보이는 전망 좋은 카페. 브런치와 디저트가 유명.",
+    img:"https://images.unsplash.com/photo-1554118811-1e0d58224f24",
+    map:{lat:37.5514, lng:126.9882}
+  },
+  {
+    id:"p12", type:"cafe", city:"제주",
+    name:"바다풍경",
+    rating:4.6, reviews:750, popular:91, recent:20251107,
+    address:"제주시 애월읍 애월리 456-78",
+    price:"6,000~12,000원",
+    signature:{ name:"제주말차라떼", price:"7,000원" },
+    tags:["오션뷰","애월","디저트","포토존"],
+    desc:"제주 바다가 한 눈에 보이는 통유리 카페. 제주 특산품을 활용한 음료가 특징.",
+    img:"https://images.unsplash.com/photo-1565299543923-37dd37887442",
+    map:{lat:33.4640, lng:126.3119}
+  },
+  {
+    id:"p13", type:"cafe", city:"부산",
+    name:"더베이",
+    rating:4.8, reviews:1200, popular:95, recent:20251109,
+    address:"부산시 해운대구 중동 789-10",
+    price:"7,000~16,000원",
+    signature:{ name:"수제 티라미수", price:"8,000원" },
+    tags:["해운대","베이커리","디저트","바다"],
+    desc:"해운대 바다를 보며 즐기는 프리미엄 디저트 카페.",
+    img:"https://images.unsplash.com/photo-1559925393-8be0ec4767c8",
+    map:{lat:35.1587, lng:129.1602}
+  },
+  {
+    id:"p14", type:"cafe", city:"서울",
+    name:"빈티지 가든",
+    rating:4.5, reviews:680, popular:88, recent:20251106,
+    address:"서울시 마포구 연남동 34-56",
+    price:"5,000~12,000원",
+    signature:{ name:"수제 스콘", price:"5,500원" },
+    tags:["연남동","가든","브런치","아늑한"],
+    desc:"식물로 가득한 실내 정원 분위기의 카페. 수제 베이커리가 유명.",
+    img:"https://images.unsplash.com/photo-1554118811-1e0d58224f24",
+    map:{lat:37.5635, lng:126.9252}
+  },
+  {
+    id:"p15", type:"cafe", city:"부산",
+    name:"옥상정원",
+    rating:4.4, reviews:520, popular:86, recent:20251105,
+    address:"부산시 중구 광복동 78-90",
+    price:"6,000~13,000원",
+    signature:{ name:"아인슈페너", price:"7,000원" },
+    tags:["루프탑","야경","광복동","커피"],
+    desc:"부산 야경을 감상할 수 있는 루프탑 카페.",
+    img:"https://images.unsplash.com/photo-1559925393-8be0ec4767c8",
+    map:{lat:35.0986, lng:129.0317}
+  },
+
+  // 야경
+  {
+    id:"p16", type:"night", city:"서울",
+    name:"남산서울타워",
+    rating:4.7, reviews:8500, popular:94, recent:20251108,
+    address:"서울시 용산구 남산공원길 105",
+    price:"전망대 16,000원",
+    tags:["전망대","야경","데이트","랜드마크"],
+    desc:"서울의 상징적인 타워로, 도시의 멋진 야경을 360도로 감상할 수 있는 곳.",
+    img:"https://images.unsplash.com/photo-1578632292335-df3abbb0d586",
+    map:{lat:37.5514, lng:126.9882}
+  },
+  {
+    id:"p17", type:"night", city:"부산",
+    name:"영도대교",
+    rating:4.5, reviews:2200, popular:89, recent:20251107,
+    address:"부산시 중구 영도대교",
+    price:"무료",
+    tags:["다리","야경","바다","영도"],
+    desc:"부산 항구의 밤바다와 화려한 조명이 어우러진 멋진 야경 포인트.",
+    img:"https://images.unsplash.com/photo-1625794084867-8ddd239946b1",
+    map:{lat:35.0975, lng:129.0403}
+  },
+  {
+    id:"p18", type:"night", city:"제주",
+    name:"새연교",
+    rating:4.6, reviews:1800, popular:91, recent:20251109,
+    address:"제주시 서귀포시 중문동",
+    price:"무료",
+    tags:["다리","야경","중문","포토스팟"],
+    desc:"바다 위를 걷는 듯한 느낌의 야간 산책로. LED 조명이 아름다운 곳.",
+    img:"https://images.unsplash.com/photo-1590123053695-8b63a1eef293",
+    map:{lat:33.2466, lng:126.4149}
+  },
+  {
+    id:"p19", type:"night", city:"서울",
+    name:"DDP",
+    rating:4.4, reviews:3100, popular:87, recent:20251106,
+    address:"서울시 중구 을지로 281",
+    price:"무료(일부 전시 유료)",
+    tags:["건축","야경","을지로","문화"],
+    desc:"미래적인 디자인의 건물 외관이 LED 조명과 어우러져 환상적인 야경을 선사.",
+    img:"https://images.unsplash.com/photo-1578632292335-df3abbb0d586",
+    map:{lat:37.5667, lng:127.0094}
+  },
+  {
+    id:"p20", type:"night", city:"부산",
+    name:"광안대교",
+    rating:4.8, reviews:4500, popular:96, recent:20251105,
+    address:"부산시 수영구 광안해변로",
+    price:"무료",
+    tags:["다리","야경","광안리","해변"],
+    desc:"매시간 진행되는 LED 쇼와 함께 부산의 대표적인 야경 명소.",
+    img:"https://images.unsplash.com/photo-1625794084867-8ddd239946b1",
+    map:{lat:35.1447, lng:129.1181}
   },
   {
     id:"p40", type:"food", city:"제주",
