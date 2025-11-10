@@ -18,49 +18,85 @@
         <div class="tools">
           <button id="toggleTheme" class="btn" aria-label="다크 모드 토글">다크 모드</button>
           <button id="showFavorites" class="btn" aria-label="즐겨찾기 보기">즐겨찾기</button>
-          <button id="showAgeStats" class="btn" aria-label="연령대 통계 보기">연령대 통계</button>
           <a class="btn-primary btn" href="#submit" aria-label="장소 제안">장소 제안하기</a>
         </div>
       </div>
+
+      <!-- nav와 검색창 사이 실선 구분 -->
+      <hr class="nav-separator">
+
       <div class="searchbar">
-        <select id="sort" class="input" aria-label="정렬">
-          <option value="popular">인기순</option>
-          <option value="rating">평점순</option>
-          <option value="recent">최신순</option>
-        </select>
-        <select id="city" class="input" aria-label="도시 선택">
-          <option value="">전체 도시</option>
-          <option>부산</option>
-          <option>서울</option>
-          <option>제주</option>
-        </select>
-        <select id="cuisine" class="input" aria-label="요리 종류">
-          <option value="">전체 요리</option>
-          <option value="korean">한식</option>
-          <option value="western">양식</option>
-          <option value="chinese">중식</option>
-          <option value="japanese">일식</option>
-          <option value="fusion">퓨전/기타</option>
-          <option value="other">기타</option>
-        </select>
-        <select id="ageFilter" class="input" aria-label="연령대 선택">
-          <option value="">전체 연령대</option>
-          <option value="10s">10대</option>
-          <option value="20s">20대</option>
-          <option value="30s">30대</option>
-          <option value="40s">40대</option>
-          <option value="50s">50대 이상</option>
-        </select>
-        <input id="q" class="input" type="search" placeholder="도시, 장소명, 메뉴, 키워드 검색 (예: 부산, 회, 전망대)" aria-label="검색" />
-        <button id="clear" class="btn" aria-label="초기화">초기화</button>
-      </div>
-      <div class="chips" role="tablist" aria-label="카테고리">
-        <button class="chip active" data-filter="all" role="tab" aria-selected="true">전체</button>
-        <button class="chip" data-filter="food" role="tab">맛집</button>
-        <button class="chip" data-filter="sight" role="tab">관광명소</button>
-        <button class="chip" data-filter="cafe" role="tab">카페</button>
-        <button class="chip" data-filter="night" role="tab">야경/포인트</button>
-        <button class="chip" data-filter="budget" role="tab">가성비</button>
+        <div class="search-controls">
+          <div class="search-input" role="search" aria-label="검색창 래퍼">
+            <input id="q" type="search" placeholder="도시, 장소명, 메뉴, 키워드 검색" aria-label="검색" />
+            <button class="search-icon" aria-hidden="true" tabindex="-1">
+              <!-- 간단한 돋보기 SVG -->
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+            </button>
+          </div>
+          <button id="filterBtn" class="btn filter-btn" aria-expanded="false" aria-controls="filterMenu" title="필터">필터</button>
+          <button id="clear" class="btn" aria-label="초기화">초기화</button>
+        </div>
+        <!-- 필터 드롭다운: 기존 셀렉트는 여기로 이동(아이디 동일) -->
+        <div id="filterMenu" class="filter-menu" hidden>
+          <div class="filter-row">
+            <label>정렬</label>
+            <select id="sort" class="input" aria-label="정렬">
+              <option value="popular">인기순</option>
+              <option value="rating">평점순</option>
+              <option value="recent">최신순</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <label>도시</label>
+            <select id="city" class="input" aria-label="도시 선택">
+              <option value="">전체 도시</option>
+              <option>부산</option>
+              <option>서울</option>
+              <option>제주</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <label>요리</label>
+            <select id="cuisine" class="input" aria-label="요리 종류">
+              <option value="">전체 요리</option>
+              <option value="korean">한식</option>
+              <option value="western">양식</option>
+              <option value="chinese">중식</option>
+              <option value="japanese">일식</option>
+              <option value="fusion">퓨전/기타</option>
+              <option value="other">기타</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <label>연령대</label>
+            <select id="ageFilter" class="input" aria-label="연령대 선택">
+              <option value="">전체 연령대</option>
+              <option value="10s">10대</option>
+              <option value="20s">20대</option>
+              <option value="30s">30대</option>
+              <option value="40s">40대</option>
+              <option value="50s">50대 이상</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px">
+            <button id="applyFilters" class="btn btn-primary">적용</button>
+            <button id="closeFilters" class="btn">닫기</button>
+          </div>
+        </div>
+
+        <!-- 카테고리 칩을 검색창 바로 아래로 이동 -->
+        <div class="chips" role="tablist" aria-label="카테고리" style="margin-top:12px">
+          <button class="chip active" data-filter="all" role="tab" aria-selected="true">전체</button>
+          <button class="chip" data-filter="food" role="tab">맛집</button>
+          <button class="chip" data-filter="sight" role="tab">관광명소</button>
+          <button class="chip" data-filter="cafe" role="tab">카페</button>
+          <button class="chip" data-filter="night" role="tab">야경/포인트</button>
+          <button class="chip" data-filter="budget" role="tab">가성비</button>
+        </div>
       </div>
     </div>
   </header>
@@ -103,7 +139,8 @@
   </div>
 
   <footer class="container">
-    <div>© 2025 여행자를 위한 맛집 · 관광명소. 모든 데이터는 사용자 기기에 저장되는 로컬 데모입니다.</div>
+    <div>© 2025 여행자를 위한 맛집 · 관광명소. 
+    </div>
   </footer>
 
   <script src="app.js" defer></script>

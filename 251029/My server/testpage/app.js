@@ -335,52 +335,6 @@ document.getElementById("ageFilter").addEventListener("change", e=>{
   render();
 });
 
-// 연령대 통계 보기: 현재 필터에 해당하는 목록의 평균 선호도를 모달로 표시
-document.getElementById("showAgeStats").addEventListener("click", ()=>{
-  // 현재 보여질 항목 기준으로 집계
-  const q = state.query.trim().toLowerCase();
-  const list = PLACES.filter(p=>{
-    const passesFilter = state.filter==="all" || p.type===state.filter || (state.filter==="budget" && (p.price||"").match(/[0-9]/) && /6,?000|7,?000|8,?000|만원|저렴|가성비/.test(p.price));
-    const passesCity = !state.city || p.city===state.city;
-    const text = [p.name,p.address,p.price,(p.tags||[]).join(" "),p.city,p.desc].join(" ").toLowerCase();
-    const passesQuery = !q || text.includes(q);
-    return passesFilter && passesCity && passesQuery;
-  });
-
-  if(list.length===0){
-    alert("현재 표시에 항목이 없습니다.");
-    return;
-  }
-
-  // 평균 계산
-  const totals = { "10s":0, "20s":0, "30s":0, "40s":0, "50s":0 };
-  list.forEach(p=>{
-    totals["10s"] += p.popByAge?.["10s"]||0;
-    totals["20s"] += p.popByAge?.["20s"]||0;
-    totals["30s"] += p.popByAge?.["30s"]||0;
-    totals["40s"] += p.popByAge?.["40s"]||0;
-    totals["50s"] += p.popByAge?.["50s"]||0;
-  });
-  const avg = {};
-  for(const k of Object.keys(totals)) avg[k] = Math.round(totals[k] / list.length);
-
-  // 모달에 표시
-  modalTitle.textContent = "연령대별 선호 통계";
-  modalContent.innerHTML = `
-    <div class="stats">
-      <div class="stat-row"><div class="stat-label">10대</div><div class="stat-bar"><div class="stat-fill" style="width:${avg["10s"]}%"></div></div><div class="stat-value">${avg["10s"]}%</div></div>
-      <div class="stat-row"><div class="stat-label">20대</div><div class="stat-bar"><div class="stat-fill" style="width:${avg["20s"]}%"></div></div><div class="stat-value">${avg["20s"]}%</div></div>
-      <div class="stat-row"><div class="stat-label">30대</div><div class="stat-bar"><div class="stat-fill" style="width:${avg["30s"]}%"></div></div><div class="stat-value">${avg["30s"]}%</div></div>
-      <div class="stat-row"><div class="stat-label">40대</div><div class="stat-bar"><div class="stat-fill" style="width:${avg["40s"]}%"></div></div><div class="stat-value">${avg["40s"]}%</div></div>
-      <div class="stat-row"><div class="stat-label">50대+</div><div class="stat-bar"><div class="stat-fill" style="width:${avg["50s"]}%"></div></div><div class="stat-value">${avg["50s"]}%</div></div>
-    </div>
-  `;
-  modalTags.innerHTML = "";
-  modalMap.innerHTML = "";
-  backdrop.style.display="flex";
-  backdrop.setAttribute("aria-hidden","false");
-});
-
 // --- 유틸: 문자열에서 숫자(원 단위) 추출 및 포맷 ---
 function extractNumbers(str){
   if(!str) return [];
@@ -423,3 +377,75 @@ function genMenus(place){
 
 // 초기 렌더
 render();
+
+// 필터 메뉴 토글 및 마우스 위치 기준 표시
+document.addEventListener("DOMContentLoaded", ()=>{
+  const filterBtn = document.getElementById("filterBtn");
+  const filterMenu = document.getElementById("filterMenu");
+  const applyBtn = document.getElementById("applyFilters");
+  const closeBtn = document.getElementById("closeFilters");
+
+  if(filterBtn && filterMenu){
+    const closeMenu = ()=>{ 
+      filterMenu.hidden = true; 
+      filterBtn.setAttribute("aria-expanded","false"); 
+      // 초기화할 경우 inline 위치 제거
+      filterMenu.style.left = "";
+      filterMenu.style.top = "";
+      filterMenu.style.position = "";
+    };
+    const openMenuAt = (x,y)=>{
+      // position fixed로 화면 기준 배치
+      filterMenu.style.position = "fixed";
+      // 잠깐 표시해서 offsetWidth/Height 계산 가능하게 함
+      filterMenu.hidden = false;
+      filterBtn.setAttribute("aria-expanded","true");
+
+      const OFFSET = 8;
+      let left = x + OFFSET;
+      let top = y - (filterMenu.offsetHeight / 2); // 마우스 수직 중앙 정렬 시도
+
+      // 화면 우측/좌측/상하 경계 보정
+      const maxLeft = window.innerWidth - filterMenu.offsetWidth - OFFSET;
+      if(left > maxLeft) left = Math.max(OFFSET, maxLeft);
+      if(left < OFFSET) left = OFFSET;
+
+      if(top + filterMenu.offsetHeight > window.innerHeight - OFFSET){
+        top = window.innerHeight - filterMenu.offsetHeight - OFFSET;
+      }
+      if(top < OFFSET) top = OFFSET;
+
+      filterMenu.style.left = `${left}px`;
+      filterMenu.style.top = `${top}px`;
+    };
+
+    filterBtn.addEventListener("click", e=>{
+      e.stopPropagation();
+      if(filterMenu.hidden){
+        // 마우스 좌표를 사용해 메뉴를 버튼 클릭 위치 우측에 표시
+        openMenuAt(e.clientX, e.clientY);
+      } else {
+        closeMenu();
+      }
+    });
+
+    // 내부 클릭 시 전파 중단
+    filterMenu.addEventListener("click", e=> e.stopPropagation());
+    // 외부 클릭으로 닫기
+    document.addEventListener("click", ()=> closeMenu());
+    // ESC로 닫기
+    document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeMenu(); });
+
+    // apply/close 버튼
+    if(applyBtn) applyBtn.addEventListener("click", ()=>{ 
+      // change 이벤트 트리거로 상태 업데이트
+      const ev = new Event('change',{bubbles:true});
+      document.getElementById("sort")?.dispatchEvent(ev);
+      document.getElementById("city")?.dispatchEvent(ev);
+      document.getElementById("cuisine")?.dispatchEvent(ev);
+      document.getElementById("ageFilter")?.dispatchEvent(ev);
+      closeMenu();
+    });
+    if(closeBtn) closeBtn.addEventListener("click", ()=> closeMenu());
+  }
+});

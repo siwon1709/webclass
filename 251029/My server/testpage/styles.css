@@ -36,7 +36,8 @@ header{
 .btn:hover{transform:translateY(-1px)}
 .btn-primary{background:var(--primary);border-color:transparent;color:#fff}
 .searchbar{
-  display:flex;gap:10px;margin-top:12px;flex-wrap:wrap
+  display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;
+  justify-content:center; /* 추가: 가운데 정렬 */
 }
 .input{
   flex:1;min-width:220px;padding:12px 14px;border:1px solid var(--border);
@@ -116,4 +117,110 @@ footer{
   height:1px;
   background:var(--border);
   margin:12px 0;
+}
+.search-controls{display:flex;align-items:center;gap:10px; position:relative} /* position 추가 */
+.search-input{
+  width:477px;height:30px;display:flex;align-items:center;position:relative;
+  border-radius:999px;border:1px solid #cfcfcf;background:var(--bg);padding:0 8px;
+}
+.search-input input{
+  border:0;outline:none;width:100%;height:100%;padding:4px 36px 4px 12px;background:transparent;color:var(--text);font-size:0.95rem;
+}
+.search-input .search-icon{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  width:28px;height:28px;border-radius:999px;background:transparent;border:0;color:var(--muted);display:grid;place-items:center;cursor:default;
+}
+.search-input .search-icon svg{width:16px;height:16px}
+
+.filter-btn{
+  /* 기존: padding:6px 10px;border-radius:10px */
+  /* 변경: .btn과 동일한 크기/간격으로 통일 */
+  padding:10px 12px;
+  border-radius:10px;
+}
+
+/* 기본적으로 숨김. hidden 어트리뷰트를 존중하도록 함 */
+.filter-menu{
+  display:none;
+  position:absolute;z-index:110;right:0;top:40px;min-width:260px;background:var(--card);border:1px solid var(--border);
+  box-shadow:0 10px 30px rgba(0,0,0,.08);border-radius:12px;padding:12px;flex-direction:column;gap:8px;
+  max-width:320px; /* 작은 화면에서 넉넉히 보이도록 상한 지정 */
+  box-sizing:border-box;
+}
+/* hidden이 제거됐을 때만 표시 */
+.filter-menu:not([hidden]){ display:flex; }
+
+/* 필터 내부 스타일 */
+.filter-row{display:flex;flex-direction:column;gap:6px}
+.filter-row label{font-size:0.85rem;color:var(--muted)}
+.filter-menu .input{width:100%;padding:8px;border-radius:8px}
+
+/* 모바일 정리: 버튼/검색창/필터 메뉴 정돈 */
+@media (max-width:640px) {
+  /* 헤더 툴바: 버튼 크기 축소, 줄 바꿈 허용 */
+  .tools{
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .tools .btn, .tools .btn-primary {
+    padding:8px 10px;
+    font-size:0.86rem;
+    min-width:0;
+  }
+
+  /* 검색 컨트롤: 세로 스택, 전체 폭 사용 */
+  .searchbar{ padding:12px 8px; }
+  .search-controls{
+    flex-direction:column;
+    align-items:stretch;
+    gap:10px;
+  }
+  .search-input{
+    width:100%;
+    height:38px;
+  }
+  .search-input input{ font-size:0.95rem; padding:6px 40px 6px 12px; }
+
+  /* 돋보기 아이콘 위치/크기 미세조정 */
+  .search-input .search-icon{
+    right:8px; width:30px; height:30px;
+    color:var(--muted);
+  }
+
+  /* 필터 버튼 우측 정렬 대신 오른쪽에 자연스럽게 위치 */
+  .filter-btn{ align-self:flex-end; padding:8px 10px; }
+
+  /* 칩 리스트: 스크롤 가능하도록 하고 크기 축소 */
+  .chips{
+    display:flex;
+    gap:8px;
+    overflow:auto;
+    padding:8px 2px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .chip{ padding:6px 10px; font-size:0.9rem; }
+
+  /* 필터 메뉴: 하단 고정, 전체 너비로 표시 */
+  .filter-menu{
+    position:fixed !important;
+    left:8px !important;
+    right:8px !important;
+    bottom:12px !important;
+    top:auto !important;
+    max-width:none;
+    width: calc(100% - 16px);
+    display:flex !important;
+    flex-direction:column;
+    z-index:120;
+    box-shadow:0 12px 36px rgba(0,0,0,.18);
+    padding:12px;
+    border-radius:12px;
+  }
+
+  /* 필터 내부 버튼 정렬 개선 */
+  .filter-menu > div[style] { justify-content:flex-end; }
+
+  /* 모달 등 요소의 여백 보정 */
+  .modal { margin: 10px; }
 }
