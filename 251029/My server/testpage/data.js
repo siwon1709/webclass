@@ -1,0 +1,103 @@
+window.PLACES = [
+  {
+    id: 1,
+    name: "제주 흑돼지 식당",
+    city: "제주",
+    category: "맛집",
+    cuisine: "korean",
+    rating: 4.7,
+    popular: 98,
+    tags: ["흑돼지","로컬","생고기","한식"],
+    desc: "제주산 흑돼지를 참숯에 구워내는 현지인 추천 맛집.",
+    address: "제주시 어딘가 123",
+    price: "20000~30000원"
+  },
+  {
+    id: 2,
+    name: "성산일출봉",
+    city: "제주",
+    category: "관광명소",
+    rating: 4.9,
+    popular: 100,
+    tags: ["유네스코","일출","뷰포인트"],
+    desc: "일출 명소로 유명한 제주 대표 자연 경관.",
+    address: "서귀포시 성산읍",
+    price: "입장료 성인 5000원"
+  },
+  {
+    id: 3,
+    name: "남포동 해산물 뷰맛집",
+    city: "부산",
+    category: "맛집",
+    cuisine: "korean",
+    rating: 4.5,
+    popular: 87,
+    tags: ["해산물","부산","뷰좋은","가성비"],
+    desc: "싱싱한 해산물과 탁 트인 바다 전망.",
+    address: "부산광역시 중구 남포동",
+    price: "15000~40000원"
+  },
+  {
+    id: 4,
+    name: "부산 야경 포인트",
+    city: "부산",
+    category: "야경/포인트",
+    rating: 4.6,
+    popular: 90,
+    tags: ["야경","포토존","부산"],
+    desc: "부산 도심과 바다 야경을 한번에.",
+    address: "부산광역시 영도구",
+    price: "무료"
+  },
+  {
+    id: 5,
+    name: "서울 감성 카페 로지",
+    city: "서울",
+    category: "카페",
+    cuisine: "other",
+    rating: 4.3,
+    popular: 72,
+    tags: ["감성","디저트","사진","카페투어"],
+    desc: "빈티지 인테리어와 수제 디저트가 특징.",
+    address: "서울 마포구 어딘가",
+    price: "8000~15000원"
+  },
+  {
+    id: 6,
+    name: "경복궁",
+    city: "서울",
+    category: "관광명소",
+    rating: 4.8,
+    popular: 99,
+    tags: ["궁궐","역사","한복"],
+    desc: "조선 왕조의 법궁, 한복 체험과 함께 인기.",
+    address: "서울 종로구",
+    price: "일반 3000원"
+  },
+  {
+    id: 7,
+    name: "제주 숨은 카페 포구",
+    city: "제주",
+    category: "카페",
+    cuisine: "other",
+    rating: 4.2,
+    popular: 65,
+    tags: ["로스터리","원두","조용한","뷰"],
+    desc: "바다를 바라보며 핸드드립을 즐길 수 있는 카페.",
+    address: "제주시 해안도로",
+    price: "6000~12000원"
+  },
+  {
+    id: 8,
+    name: "서울 가성비 분식골목",
+    city: "서울",
+    category: "가성비",
+    cuisine: "korean",
+    rating: 4.1,
+    popular: 70,
+    tags: ["분식","가성비","떡볶이"],
+    desc: "저렴하고 다양한 분식 메뉴 즐기기.",
+    address: "서울 중구",
+    price: "5000~10000원"
+  }
+];

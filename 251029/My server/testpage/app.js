@@ -366,7 +366,7 @@ function render(){
           <span class="pill" style="font-weight:600">${( {korean:"한식", western:"양식", chinese:"중식", japanese:"일식", fusion:"퓨전", other:"기타"}[p.cuisine] ) || p.cuisine}</span>
         </div>
         <div class="tags">
-          ${(p.tags||[]).slice(0,4).map(t=>`<span class="tag">${t}</span>`).join("")}
+          ${(p.tags||[]).slice(0,4).map(t=>`<span class="tag">#${t}</span>`).join("")}
         </div>
         <div class="card-actions">
           <button class="btn btn-primary" data-open="${p.id}">자세히 보기</button>
@@ -374,11 +374,22 @@ function render(){
             ${state.favorites.has(p.id) ? "즐겨찾기 해제" : "즐겨찾기"}
           </button>
         </div>
-        <div style="margin-top:10px" class="pill">연령대 선호: 10대 ${p.popByAge["10s"]}% · 20대 ${p.popByAge["20s"]}% · 30대 ${p.popByAge["30s"]}%</div>
       </div>
     `;
     grid.appendChild(el);
   }
+}
+
+// 최상위 연령대 라벨 계산
+function topAgeLabel(agePref){
+  if (!agePref) return "";
+  const map = { "10s":"10대", "20s":"20대", "30s":"30대", "40s":"40대", "50s":"50대" };
+  let topKey=null, topVal=-Infinity;
+  for (const [k,v] of Object.entries(agePref)){
+    const num = typeof v === "number" ? v : parseFloat(String(v).replace("%","")) || 0;
+    if (num > topVal){ topVal = num; topKey = k; }
+  }
+  return topKey ? (map[topKey] || topKey) : "";
 }
 
 // 이벤트: 검색/필터/정렬 (요리 종류 추가)
@@ -450,7 +461,7 @@ document.getElementById("showFavorites").addEventListener("click", ()=>{
       <div class="card-body">
         <div class="title">${p.name} <span class="pill">· 즐겨찾기</span></div>
         <div class="meta"><span>${p.city}</span><span>·</span><span>${p.address||"주소 정보 없음"}</span></div>
-        <div class="tags">${(p.tags||[]).slice(0,4).map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+        <div class="tags">${(p.tags||[]).slice(0,4).map(t=>`<span class="tag">#${t}</span>`).join("")}</div>
         <div class="card-actions">
           <button class="btn btn-primary" data-open="${p.id}">자세히 보기</button>
           <button class="btn btn-like" data-fav="${p.id}">즐겨찾기 해제</button>
@@ -506,7 +517,7 @@ function openModal(id){
   infoHtml += `<p style="margin-top:8px">${p.desc||""}</p></div></div>`;
 
   modalContent.innerHTML = infoHtml;
-  modalTags.innerHTML = (p.tags||[]).map(t=>`<span class="tag">${t}</span>`).join("");
+  modalTags.innerHTML = (p.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join("");
   // 간단 지도 임베드
   modalMap.innerHTML = `
     <iframe title="지도" width="100%" height="300" style="border:0" loading="lazy"

@@ -6,6 +6,125 @@
   <title>여행자를 위한 맛집 · 관광명소</title>
   <meta name="description" content="여행자를 위한 맛집과 관광명소 추천, 검색, 즐겨찾기 기능 제공" />
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 주변 교통(역/정류장) 섹션 스타일 */
+    .transit {
+      margin-top:14px;
+      padding:12px 14px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--card);
+      font-size:.85rem;
+    }
+    .transit h3 {
+      margin:0 0 8px;
+      font-size:.9rem;
+      font-weight:700;
+    }
+    .transit-list {
+      margin:0;
+      padding:0;
+      list-style:none;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .transit-item {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      line-height:1.3;
+    }
+    .transit-item .icon { font-size:1rem; }
+    .transit-item .name { font-weight:600; }
+    .transit-item .distance { color:var(--muted); font-size:.78rem; }
+    .transit-empty { color:var(--muted); font-size:.78rem; }
+
+    /* 만족도 조사 팝업 스타일 */
+    .survey-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .survey-backdrop.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .survey-modal {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .survey-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .survey-header button {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .survey-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .stars {
+      display: flex;
+      gap: 4px;
+    }
+    .star-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+    .star-btn:hover {
+      transform: scale(1.2);
+    }
+    .star-btn.active svg {
+      fill: gold;
+    }
+    .survey-comment {
+      resize: none;
+      height: 60px;
+    }
+    .survey-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .disable-7d {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -21,10 +140,6 @@
           <a class="btn-primary btn" href="#submit" aria-label="장소 제안">장소 제안하기</a>
         </div>
       </div>
-
-      <!-- nav와 검색창 사이 실선 구분 -->
-      <hr class="nav-separator">
-
       <div class="searchbar">
         <div class="search-controls">
           <div class="search-input" role="search" aria-label="검색창 래퍼">
@@ -132,8 +247,51 @@
       </div>
       <div class="modal-body">
         <div id="modalContent"></div>
-        <div id="modalTags" class="tags"></div>
+        <div id="modalTags" class="tags">
+          <!-- 태그 앞에 해시태그(#) 추가 -->
+          <span class="tag">#흑돼지</span>
+          <span class="tag">#제주</span>
+          <span class="tag">#로컬맛집</span>
+          <span class="tag">#생선구이</span>
+        </div>
+        <!-- 주변 교통 정보 출력 영역 추가 -->
+        <div id="modalTransit"></div>
         <div class="map" id="modalMap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 만족도 조사 팝업 -->
+  <div id="surveyBackdrop" class="survey-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="survey-modal">
+      <div class="survey-header">
+        <div>사이트 만족도 조사</div>
+        <button id="surveyClose" class="survey-close" aria-label="닫기">✕</button>
+      </div>
+      <div class="survey-body">
+        <div>사이트에 대해 얼마나 만족하십니까?</div>
+        <div class="stars" id="surveyStars" role="radiogroup" aria-label="만족도 별점">
+          <button class="star-btn" type="button" data-value="1" aria-label="1점" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </button>
+          <button class="star-btn" type="button" data-value="2" aria-label="2점" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </button>
+          <button class="star-btn" type="button" data-value="3" aria-label="3점" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </button>
+          <button class="star-btn" type="button" data-value="4" aria-label="4점" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </button>
+          <button class="star-btn" type="button" data-value="5" aria-label="5점" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </button>
+        </div>
+        <textarea id="surveyComment" class="input survey-comment" placeholder="코멘트(선택)"></textarea>
+        <div class="survey-actions">
+          <button id="surveySkip7d" class="disable-7d" type="button">7일간 다시 보지 않기</button>
+          <button id="surveySubmit" class="btn btn-primary" type="button">제출</button>
+        </div>
       </div>
     </div>
   </div>
@@ -142,7 +300,242 @@
     <div>© 2025 여행자를 위한 맛집 · 관광명소. 
     </div>
   </footer>
-
+  <script src="data.js" defer></script>
   <script src="app.js" defer></script>
+  <script>
+    // DOM에 남아있는 "연령대 선호: 10대 23% · 20대 15% ..." 텍스트에서 최다 연령대 추출
+    function extractTopAgeFromDOM(card){
+      const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, null);
+      let node, foundEl = null, text = "";
+      while ((node = walker.nextNode())) {
+        const t = node.nodeValue.trim();
+        if (!t) continue;
+        if (t.includes("연령대") || t.includes("선호")) { foundEl = node.parentElement; text = foundEl.textContent; break; }
+      }
+      if (!foundEl || !/(\d{2})대\s*\d+%/.test(text)) return { label:"", removeEl:null };
+      let top = { grp:"", val:-1 };
+      const re = /(\d{2})대\s*(\d+)%/g;
+      let m; 
+      while ((m = re.exec(text))) {
+        const val = parseInt(m[2],10);
+        if (val > top.val) top = { grp: `${m[1]}대`, val };
+      }
+      return { label: top.grp || "", removeEl: foundEl };
+    }
+
+    // 연령대 최다 선호 라벨 계산
+    function getTopAgeLabel(agePref){
+      if (!agePref) return "";
+      let topKey = null, topVal = -Infinity;
+      for (const [k, v] of Object.entries(agePref)){
+        const num = typeof v === "number" ? v : parseFloat(String(v).replace("%","")) || 0;
+        if (num > topVal){ topVal = num; topKey = k; }
+      }
+      if (!topKey) return "";
+      const map = {"10s":"10대","20s":"20대","30s":"30대","40s":"40대","50s":"50대"};
+      const n = parseInt(topKey,10);
+      return Number.isFinite(n) ? `${n}대` : (map[topKey] || "");
+    }
+
+    function upsertAgeBadge(card){
+      const anyIdEl = card.querySelector("[data-id]");
+      // 데이터 기반 우선
+      let label = "";
+      if (anyIdEl && window.PLACES) {
+        const id = Number(anyIdEl.dataset.id);
+        const place = (window.PLACES || []).find(p => p.id === id);
+        if (place) label = getTopAgeLabel(place.agePref);
+      }
+      // 데이터가 없으면 DOM 텍스트에서 파싱
+      if (!label) {
+        const fromDom = extractTopAgeFromDOM(card);
+        label = fromDom.label;
+        if (fromDom.removeEl) fromDom.removeEl.remove(); // 원 문구 제거
+      }
+
+      const target = card.querySelector(".thumb") || card;
+      const exists = target.querySelector(".age-badge");
+
+      if (!label) { if (exists) exists.remove(); return; }
+
+      if (exists) {
+        exists.textContent = `${label} 인기`;
+      } else {
+        const badge = document.createElement("span");
+        badge.className = "age-badge";
+        badge.textContent = `${label} 인기`;
+        target.appendChild(badge);
+      }
+    }
+
+    function applyBadges(){
+      const grid = document.getElementById("grid");
+      if (!grid) return;
+      grid.querySelectorAll(".card").forEach(upsertAgeBadge);
+    }
+
+    window.addEventListener("load", () => {
+      const grid = document.getElementById("grid");
+      if (!grid) return;
+      applyBadges();
+
+      const mo = new MutationObserver(muts => {
+        muts.forEach(m => {
+          m.addedNodes.forEach(n => {
+            if (n.nodeType === 1 && n.classList.contains("card")) upsertAgeBadge(n);
+          });
+        });
+      });
+      mo.observe(grid, { childList: true, subtree: false });
+    });
+
+    /* 주변 교통 데이터 매핑 (장소명 기반) */
+    const NEARBY_TRANSIT = {
+      "경복궁": [
+        { name: "경복궁역 (3호선)", type: "subway", distance: "도보 3분" },
+        { name: "광화문역 (5호선)", type: "subway", distance: "도보 8분" },
+        { name: "경복궁 버스정류장", type: "bus", distance: "도보 2분" }
+      ],
+      "성산일출봉": [
+        { name: "성산일출봉 입구 정류장", type: "bus", distance: "도보 4분" },
+        { name: "성산항 정류장", type: "bus", distance: "도보 9분" }
+      ],
+      "부산 야경 포인트": [
+        { name: "남포역 (1호선)", type: "subway", distance: "도보 7분" },
+        { name: "자갈치역 (1호선)", type: "subway", distance: "도보 10분" },
+        { name: "남포동 중앙버스정류장", type: "bus", distance: "도보 5분" }
+      ],
+      "서울 감성 카페 로지": [
+        { name: "홍대입구역 (2·경의중앙·공항철도)", type: "subway", distance: "도보 6분" },
+        { name: "서교동 버스정류장", type: "bus", distance: "도보 3분" }
+      ]
+      // 필요시 추가...
+    };
+
+    function renderTransit() {
+      const modalTitle = document.getElementById("modalTitle");
+      const box = document.getElementById("modalTransit");
+      if (!modalTitle || !box) return;
+      const placeName = modalTitle.textContent.trim();
+      const list = NEARBY_TRANSIT[placeName] || [];
+      if (!list.length) {
+        box.innerHTML = '<div class="transit"><h3>주변 교통</h3><div class="transit-empty">등록된 주변 역/정류장 정보가 없습니다.</div></div>';
+        return;
+      }
+      const html = `
+        <div class="transit">
+          <h3>주변 교통</h3>
+          <ul class="transit-list">
+            ${list.map(item => {
+              const icon = item.type === "subway" ? "🚇" : "🚌";
+              return `<li class="transit-item"><span class="icon">${icon}</span><span class="name">${item.name}</span><span class="distance">${item.distance}</span></li>`;
+            }).join("")}
+          </ul>
+        </div>
+      `;
+      box.innerHTML = html;
+    }
+
+    // 모달 표시 감지(aria-hidden 변경)
+    (function observeModal(){
+      const backdrop = document.getElementById("modalBackdrop");
+      if (!backdrop) return;
+      const applyState = () => {
+        const open = backdrop.getAttribute("aria-hidden") === "false";
+        document.body.classList.toggle("modal-open", open);
+        if (open) setTimeout(renderTransit, 0); // 기존 기능 유지
+      };
+      const obs = new MutationObserver(applyState);
+      obs.observe(backdrop, { attributes:true, attributeFilter:["aria-hidden"] });
+    })();
+
+    // 선택적으로 모달 타이틀 변경만 감지하여 재렌더
+    const modalTitleEl = document.getElementById("modalTitle");
+    if (modalTitleEl) {
+      const obsTitle = new MutationObserver(() => renderTransit());
+      obsTitle.observe(modalTitleEl, { childList:true });
+    }
+
+    // 만족도 조사 팝업 로직
+    (function initSurvey(){
+      const backdrop = document.getElementById('surveyBackdrop');
+      const stars = document.getElementById('surveyStars');
+      const submitBtn = document.getElementById('surveySubmit');
+      const closeBtn = document.getElementById('surveyClose');
+      const skip7dBtn = document.getElementById('surveySkip7d');
+      const commentEl = document.getElementById('surveyComment');
+
+      let rating = 0;
+
+      function canShow() {
+        const done = localStorage.getItem('survey_done') === '1';
+        const blockUntil = parseInt(localStorage.getItem('survey_block_until') || '0', 10);
+        const sessionShown = sessionStorage.getItem('survey_shown') === '1';
+        return !done && Date.now() > blockUntil && !sessionShown;
+      }
+      function show() {
+        if (!backdrop) return;
+        backdrop.classList.add('show');
+        backdrop.setAttribute('aria-hidden', 'false');
+        sessionStorage.setItem('survey_shown', '1'); // 이 세션에 1회만
+      }
+      function hide() {
+        if (!backdrop) return;
+        backdrop.classList.remove('show');
+        backdrop.setAttribute('aria-hidden', 'true');
+      }
+      function paintStars(n){
+        rating = n;
+        const btns = stars ? stars.querySelectorAll('.star-btn') : [];
+        btns.forEach(btn => {
+          const v = Number(btn.dataset.value);
+          const active = v <= n;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-pressed', String(active));
+        });
+      }
+
+      if (stars) {
+        stars.addEventListener('click', (e) => {
+          const btn = e.target.closest('.star-btn');
+          if (!btn) return;
+          paintStars(Number(btn.dataset.value));
+        });
+      }
+      if (closeBtn) {
+        closeBtn.addEventListener('click', hide);
+      }
+      if (skip7dBtn) {
+        skip7dBtn.addEventListener('click', () => {
+          const until = Date.now() + 7*24*60*60*1000;
+          localStorage.setItem('survey_block_until', String(until));
+          hide();
+        });
+      }
+      if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+          if (rating < 1) { alert('별점을 선택해 주세요.'); return; }
+          const payload = {
+            rating,
+            comment: (commentEl?.value || '').trim(),
+            at: new Date().toISOString()
+          };
+          // 실제 전송이 없다면 로컬에 저장만
+          localStorage.setItem('survey_result', JSON.stringify(payload));
+          localStorage.setItem('survey_done', '1'); // 1회만 표시
+          hide();
+          alert('제출되었습니다. 감사합니다!');
+        });
+      }
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hide();
+      });
+
+      // 30초 후 표시 (조건 충족 시)
+      window.addEventListener('load', () => {
+        setTimeout(() => { if (canShow()) show(); }, 30000);
+      });
+    })();
+  </script>
 </body>
 </html>

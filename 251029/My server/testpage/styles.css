@@ -19,7 +19,13 @@ header{
 }
 .container{max-width:1100px;margin:0 auto;padding:16px}
 .nav{
-  display:flex;gap:12px;align-items:center;justify-content:space-between
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+  padding-bottom: 16px;  /* 아래쪽 여백 추가 */
+  border-bottom: 1px solid var(--border);  /* 구분선 추가 */
+  margin-bottom: 16px;  /* 구분선 아래 여백 */
 }
 .brand{
   display:flex;gap:10px;align-items:center;font-weight:700;letter-spacing:.3px
@@ -80,9 +86,21 @@ footer{
 }
 /* Modal */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:100}
-.modal{max-width:760px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.modal{
+  max-width:760px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;
+  max-height: calc(100vh - 48px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden; /* 헤더 고정, 본문만 스크롤 */
+}
 .modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
-.modal-body{padding:16px}
+.modal-body{
+  padding:16px;
+  flex:1 1 auto;
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain; /* 모달 끝에서 바깥 스크롤로 튀는 것 방지 */
+}
 .modal-close{background:transparent;border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text);cursor:pointer}
 .map{
   margin-top:10px;border-radius:12px;overflow:hidden;border:1px solid var(--border)
@@ -164,11 +182,172 @@ footer{
   .filter-menu{right:8px;left:8px;top:auto;position:fixed;bottom:16px}
 }
 
-.nav-separator{
-  border:0;
-  height:1px;
-  background:var(--border);
-  margin:12px 0;
-  width:100%;
-  box-shadow: none;
+/* 연령대 선호(stats) UI 숨김 */
+.stats,
+.stat-row,
+.stat-label,
+.stat-bar,
+.stat-fill,
+.stat-value { display:none !important; }
+
+/* 연령대 인기 뱃지 (우측 상단 고정) */
+.age-badge{
+  /* pill 스타일을 평점 배지(.badge)와 유사하게 */
+  display:inline-flex;align-items:center;
+  padding:6px 10px;border-radius:999px;font-size:.85rem;font-weight:600;
+  background:rgba(0,0,0,.55);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);
+  position:static; /* 위치는 아래 .thumb .age-badge에서 결정 */
+}
+/* 카드 레벨 여백 제거(이전 규칙 무효화) */
+.card .age-badge{ margin-left:0 !important; }
+/* 이미지 영역 기준으로 우측 상단 고정 */
+.thumb .age-badge{
+  position:absolute; top:10px; right:10px; z-index:5;
+}
+/* 즐겨찾기 버튼 유무와 관계없이 동일 위치 유지(이전 top 보정 규칙 무효화) */
+.card:has(.favorite-btn) .age-badge{ top:10px !important; }
+/* === Modern theme overrides === */
+
+/* JS에서 documentElement.classList.toggle('dark')를 쓰는 경우도 지원 */
+.dark{
+  --bg:#0b1020;--text:#e6eaf3;--muted:#96a0b5;--primary:#38bdf8;--accent:#fb7185;
+  --card:#11182f;--border:#1f2a44;--shadow:0 10px 30px rgba(0,0,0,.35);
+  --tag:#1f2937;--tag-text:#e5e7eb;
+}
+
+/* 레이아웃/타이포 간격 개선 */
+body{line-height:1.55;}
+.container{padding:18px 16px;}
+h1,h2,h3{letter-spacing:.2px}
+
+/* 헤더 바: 더 은은한 보더와 반투명 */
+header{
+  border-bottom:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  backdrop-filter:saturate(180%) blur(8px);
+}
+
+/* 검색 입력을 더 크고 명확하게 */
+.search-input{
+  height:44px;
+  border-radius:12px;
+  border:1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background:var(--bg);
+  transition:border-color .15s, box-shadow .15s;
+}
+.search-input:focus-within{
+  border-color: color-mix(in srgb, var(--primary) 65%, var(--border));
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.search-input .search-icon{cursor:default;color:var(--muted);}
+
+/* 버튼: 대비와 인터랙션 강화 */
+.btn{
+  background:var(--card);
+  border:1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius:12px;
+  padding:10px 14px;
+  transition:transform .15s, box-shadow .15s, background .15s, border-color .15s;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.08);}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 4px color-mix(in srgb, var(--primary) 25%, transparent);}
+.btn-primary{
+  background:linear-gradient(180deg, color-mix(in srgb, var(--primary) 96%, #fff) 0%, var(--primary) 100%);
+  color:#fff;border-color:transparent;
+}
+.btn-primary:hover{box-shadow:0 10px 22px color-mix(in srgb, var(--primary) 28%, transparent);}
+
+/* 칩: 더 직관적인 활성 상태 */
+.chip{
+  background:color-mix(in srgb, var(--tag) 85%, transparent);
+  border:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  transition:background .15s, border-color .15s, transform .15s;
+}
+.chip:hover{transform:translateY(-1px)}
+.chip.active{
+  background:linear-gradient(180deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 100%);
+  outline:none;
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+}
+
+/* 그리드: 더 유연하게 */
+.grid{
+  grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+  gap:20px;
+}
+
+/* 카드: 모던 엘리베이션과 호버 */
+.card{
+  border:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius:16px;
+  background:var(--card);
+  box-shadow:var(--shadow);
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  position:relative;
+}
+.card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 16px 40px rgba(0,0,0,.12);
+  border-color: color-mix(in srgb, var(--primary) 20%, var(--border));
+}
+
+/* 썸네일 오버레이로 가독성 향상 */
+.thumb{background:#0b1020;}
+.thumb::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,.18) 100%);
+  pointer-events:none;
+}
+
+/* 태그: 더 산뜻하게 */
+.tag{
+  background: color-mix(in srgb, var(--tag) 80%, transparent);
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+/* 우측 상단 연령대 인기 뱃지 (썸네일 위) */
+.thumb .age-badge{
+  position:absolute; top:10px; right:10px; z-index:5;
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:999px; font-size:.82rem; font-weight:700;
+  background:rgba(0,0,0,.55); color:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+  backdrop-filter:saturate(160%) blur(2px);
+}
+
+/* 즐겨찾기 버튼을 좌측 상단으로 이동(뱃지와 겹침 방지) */
+.favorite-btn{
+  position:absolute; top:10px; left:10px;
+  border:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background:color-mix(in srgb, var(--card) 92%, transparent);
+  color:var(--accent); border-radius:999px; width:32px; height:32px;
+  display:grid; place-items:center; box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+
+/* 필터 메뉴: 카드 톤과 일관성 */
+.filter-menu{
+  border:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius:14px;
+  box-shadow:0 16px 40px rgba(0,0,0,.12);
+  background:var(--card);
+}
+
+/* 모달: 표시 상태와 깊이감 개선 */
+.modal-backdrop[aria-hidden="false"]{ display:flex; }
+.modal{
+  border:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius:18px;
+  box-shadow:0 24px 60px rgba(0,0,0,.22);
+}
+
+/* 포커스 접근성 */
+a, button, input, select, textarea { outline: none; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--primary) 25%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+}
+
+/* 반응형 최적화 */
+@media(max-width:640px){
+  .search-input{height:42px}
+  .btn{padding:10px 12px}
 }
