@@ -255,6 +255,31 @@ const PLACES = [
     map:{lat:33.512, lng:126.726}
   }
 ];
+/* 이미지 링크 업데이트: 제공된 링크로 각 장소의 이미지 교체 */
+const IMG_OVERRIDES = {
+  p3: "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSwTigdFxjLOh-pCdTyQRW6L4qr5kFLLsiG2cbYbndneW2zWNI7gY79XrGMPP61yFtkthETMeLxpKb5foIXvqRitYSjtGJi95PA-8wo7d9tBds58qWJHV9HR4YN5tHaCLU-H74h6=s1360-w1360-h1020-rw", // 흑돼지 마을
+  p1: "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSxR8Voc-rVjNdLmI59UDY7X1lXMl1eRdvujVvSP04JyEvgcWs2eat5PZKRa_FXTkXSbW2Z0Myg_X2lFudkIO_mzjg0-8bx7RUFliRTqTrhMt1GIcTQKZ6xjTjf_WJ582CFAGK5TxQ=s1360-w1360-h1020-rw", // 명품 갈비찜
+  p2: "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSxNiG8W_zF36z30RObR83uu09gmtuitYYRzqcZJWocE_O4sv5Js7LihKNMQMV7bfjXMPF2IW0NWHmu_d-i2qr33ldmGEBT-WyhY64sHVO6oMFG4cWeuwRC3FXfhG83kcfDHJs09=s1360-w1360-h1020-rw", // 해운대 회타운
+  p4: "https://search.pstatic.net/common/?src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20241124_271%2F1732413539699bdJeR_JPEG%2F20190429_Lottehotel_10167_K__K_1.jpg", // 스시 오마카세
+  p5: "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSxUWOG8vjjWLvkX8Ww17B1MJ5yQWb-fqcvPna9gomkuQsUFMOhpMtbHv_0Jo6n5MsZ_aygutx-URl0uYsJX_7Q7s598IZIrZ0JvsRovfFoVXTV-PjP5jwQMEogdzqP_IyIlQMBiTg=s1360-w1360-h1020-rw", // 원조 밀면
+  p40:"https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzAxMTNfMTg3%2FMDAxNjczNTgwMjM5ODU3.CZPUuOEOR_gUTBg8y8o3VbJ0SZaclCk8QW4hi-j6xuog.lpwqHm5Uwafh48V5dvU4C6eILjorlSKwdGZADaTntn4g.JPEG.44amazing%2F11.jpg&type=sc960_832", // 제주 고등어구이 분점
+  p8: "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMTA3MzFfNTIg%2FMDAxNjI3NjY1OTk1NzA2.nT8495WqYbq0GPaw6f_mK0AhEjcJ2zKe0NE-J-XI8GQg.wACwV2L-n3w-D0bjDpgdGGhFFYExid90MrTNcASmln8g.JPEG.sweet5234%2FIMG_7338.jpg%234032x2268", // 성산일출봉
+  p6: "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2F20091201_251%2Faliciayr_1259632251926kQkPi_jpg%2Fimg_0983_aliciayr.jpg&type=sc960_832", // 경복궁
+  p7: "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNTA1MjBfMTM0%2FMDAxNzQ3NzA4Nzk2MTQ2.gzjl9qOugYExZrCNtLVN7IGBLjcRnXZVQ6U2TTHnCKgg.zsqtkLBXogiRCUmJdwfDgoGC8pxacliqDzVXrRaZkYIg.JPEG%2FDSC00059.JPG&type=sc960_832", // 해동용궁사
+  p9: "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNDAzMDRfMjQ5%2FMDAxNzA5NTUyMDU4NTQz.QVaCIGwOvEWm_3yzcyq1WACvyfS3CsDFm8y2L-8DhnEg.BsWrsb_wGUwyzm_OM0xvm1-fZbkzQnHT4Q_kXciW_Ecg.JPEG%2F%25B4%25D9%25BF%25EE%25B7%25CE%25B5%25E5.jpg&type=sc960_832", // 북촌한옥마을
+  p10:"https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F003%2F2025%2F05%2F02%2FNISI20250502_0001833728_web_20250502124733_20250502131020507.jpg&type=sc960_832", // 감천문화마을
+  p13:"https://search.pstatic.net/common/?src=https%3A%2F%2Fpup-review-phinf.pstatic.net%2FMjAyNTAzMDFfMjYz%2FMDAxNzQwNzk4OTk2NTk0.UGjALC7nw4XBIw05tpBp6W9T2gBDqTEzGy2KXd40tzog.yPt3INlaY7vbsWR-Ybo1CFiBiImvzumHYZyUA2WGVi8g.JPEG%2FA76CC7EE-4C9F-4752-83BB-3E75D9B6B9B1.jpeg%3Ftype%3Dw1500_60_sharpen", // 더베이(101)
+  p11:"https://search.pstatic.net/common/?src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20250904_69%2F175694729160434oxB_JPEG%2F4.JPG", // 스카이라운지 카페
+  p12:"https://lh3.googleusercontent.com/gps-cs-s/AG0ilSx42MpYZUhhroBXUOZ0R6u5mjTkHWtuJS_5TX87jKwd31wtA5SdriTbN5dgqjFHy7x5GnASYZVtiFA9SXXW_lccyR0f8y-hNbLJtswZcq-VQqPIqFwxpe5bacvAvbxRFcOZOzwWtw=s1360-w1360-h1020-rw", // 바다풍경
+  p14:"https://search.pstatic.net/common/?src=https%3A%2F%2Fpup-review-phinf.pstatic.net%2FMjAyMzEwMDRfMjYw%2FMDAxNjk2NDIzNDM5NjMz.7eYcpEigNcFqdOf3IXF6NKN22pQp7PeirpmBjQwZ6eYg.2foDy_j7cnHWrJqemmXF1pOHd_z8vHsXSsV-R1BOxw8g.JPEG%2F5E6CF5F6-CF86-4379-9215-5C5B38BD03DD.jpeg%3Ftype%3Dw1500_60_sharpen", // 빈티지 가든
+  p15:"https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNTA5MDlfMjUw%2FMDAxNzU3NDA2NjEwODkz.B051C4ukupGt8dcDCzxtz2Qfeu_l9EwDR6fgMxDEPnwg.LzkxfJrx9m5QhwlgRJZ0mBSbkHpxI9T9yztqRkwOC44g.JPEG%2F20250606_175123.jpg&type=sc960_832", // 옥상정원
+  p20:"https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNDAzMjhfMjE2%2FMDAxNzExNjI0MTc4ODYy.PFfFAmZHYz2Ub9B2w-aaYUxqE3qw20PX8hDewSaZ9i0g.4qt-_GI0A3dgMNw7RfO6J_8YJD3Qgq2ZaSZ0hAVjzrgg.JPEG%2FDSCN6714%25A3%25AD01.jpeg&type=sc960_832", // 광안대교
+  p16:"https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNTA3MjhfOTcg%2FMDAxNzUzNjc0NjMwODc2.ll2YEwEmzQZa6x1fC4lX3IcpzVxFZha5kE_ZPQE8qCog.5m7as6ph6IWaXcgwfvbKBOeGFsNxuIGC_za9pqlhtrcg.JPEG%2FDSCF0641.jpg&type=sc960_832", // 남산서울타워(N서울타워)
+  p18:"https://search.pstatic.net/common/?src=https%3A%2F%2Fldb-phinf.pstatic.net%2F20200619_154%2F1592522109358JICN2_JPEG%2F5Cb6q-vywf9xe1dgmAZwm__C.jpg", // 새연교
+  p17:"https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNDA1MjdfMjU0%2FMDAxNzE2NzY2MDU5Nzc1.84ea7ltl3PxrdxuKFk-xjXnOLwe9HVcpuI1XZiXQSmQg.v3u3QHpCkuYhoAlnELS1FtdNZBl8BQB1BKpTB2JNQ0Qg.JPEG%2F%25B1%25A4%25BA%25B9%25B7%25D4%25B5%25A5%25C0%25FC%25B8%25C1%25B4%25EB_%25BF%25B5%25B5%25B5%25B4%25EB%25B1%25B3%25B5%25B5%25B0%25B3%25BB%25E7%25C1%25F8.jpg&type=sc960_832", // 영도대교
+  p19:"https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyNTEwMTFfMTQ4%2FMDAxNzYwMTc1ODE0NjUw.shBcbAJOqO-zMYkzUe2KeiWUeecU0RB8It9WAmL9vkEg.Nf-Ph5Oq8MJBoAXdx7v1a6CpyNfd3y9tXJ8IqpjnWgog.PNG%2F%25BD%25BA%25C5%25A9%25B8%25B0%25BC%25A6_2025-10-11_182921.png&type=sc960_832" // 동대문디자인플라자(DDP)
+};
+PLACES.forEach(p => { if (IMG_OVERRIDES[p.id]) p.img = IMG_OVERRIDES[p.id]; });
 
 // --- 추가: 연령대별 선호 데이터 보장 (존재하지 않으면 결정적 생성) ---
 function deterministicSeed(str){
