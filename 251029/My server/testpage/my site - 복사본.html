@@ -40,91 +40,31 @@
     .transit-item .distance { color:var(--muted); font-size:.78rem; }
     .transit-empty { color:var(--muted); font-size:.78rem; }
 
-    /* 만족도 조사 팝업 스타일 */
-    .survey-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .survey-backdrop.show {
-      opacity: 1;
-      pointer-events: all;
-    }
-    .survey-modal {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 20px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .survey-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .survey-header button {
-      background: none;
-      border: none;
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-    .survey-body {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .stars {
-      display: flex;
-      gap: 4px;
-    }
-    .star-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.2s;
-    }
-    .star-btn:hover {
-      transform: scale(1.2);
-    }
-    .star-btn.active svg {
-      fill: gold;
-    }
-    .survey-comment {
-      resize: none;
-      height: 60px;
-    }
-    .survey-actions {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-    }
-    .disable-7d {
-      background: none;
-      border: none;
-      color: var(--primary);
-      cursor: pointer;
-      font-size: 0.9rem;
-      text-decoration: underline;
-    }
+    /* 주변 맛집 팝업 */
+    .nearby-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:120}
+    .nearby-backdrop.show{display:flex}
+    .nearby-modal{width:min(520px,92%);background:var(--bg);border:1px solid var(--border);border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden}
+    .nearby-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);font-weight:700}
+    .nearby-close{border:1px solid var(--border);background:transparent;border-radius:10px;padding:6px 10px;cursor:pointer}
+    .nearby-body{padding:14px;max-height:60vh;overflow:auto}
+    .nearby-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+    .nearby-item{border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--card);display:flex;flex-direction:column;gap:6px}
+    .nearby-item .name{font-weight:700}
+    .nearby-item .addr{font-size:.88rem;color:var(--muted)}
+    .nearby-item .actions{display:flex;gap:8px}
+    .nearby-item .btn-link{border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:6px 10px;font-size:.86rem;text-decoration:none;color:inherit}
+    .nearby-meta{display:flex;align-items:center;gap:8px;font-size:.72rem;}
+    #nearbyLoc{padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--muted);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .nearby-reload{border:1px solid var(--border);background:var(--card);color:var(--text);padding:4px 10px;border-radius:8px;font-size:.7rem;cursor:pointer;}
+    .nearby-reload:hover{background:var(--bg);}
+
+    /* 평점 표시 */
+    .nearby-rating{display:flex;align-items:center;gap:6px;font-size:.78rem;}
+    .nearby-rating .rating-value{font-weight:600;color:var(--text);}
+    .nearby-rating .stars{font-size:.72rem;letter-spacing:1px;color:#fbbf24;}
   </style>
+  <!-- Kakao Maps SDK: 실제 앱키로 교체 -->
+  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9ea6307d093424b5d332f6838987fb7d&libraries=services"></script>
 </head>
 <body>
   <header>
@@ -154,6 +94,8 @@
           </div>
           <button id="filterBtn" class="btn filter-btn" aria-expanded="false" aria-controls="filterMenu" title="필터">필터</button>
           <button id="clear" class="btn" aria-label="초기화">초기화</button>
+          <!-- 내 위치 찾기 버튼 추가 -->
+          <button id="btnMyLocation" class="btn" type="button">내 주변 맛집 찾기</button>
         </div>
         <!-- 필터 드롭다운: 기존 셀렉트는 여기로 이동(아이디 동일) -->
         <div id="filterMenu" class="filter-menu" hidden>
@@ -261,37 +203,20 @@
     </div>
   </div>
 
-  <!-- 만족도 조사 팝업 -->
-  <div id="surveyBackdrop" class="survey-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="survey-modal">
-      <div class="survey-header">
-        <div>사이트 만족도 조사</div>
-        <button id="surveyClose" class="survey-close" aria-label="닫기">✕</button>
+  <!-- 주변 맛집 팝업 -->
+  <div id="nearbyBackdrop" class="nearby-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="nearby-modal">
+      <div class="nearby-header">
+        <div id="nearbyTitle">내 주변 맛집</div>
+        <div class="nearby-meta">
+          <span id="nearbyLoc" aria-label="현재 위치">위치 확인 대기</span>
+          <button id="nearbyReload" type="button" class="nearby-reload" aria-label="위치 재검색">재검색</button>
+        </div>
+        <button id="nearbyClose" class="nearby-close" aria-label="닫기">닫기</button>
       </div>
-      <div class="survey-body">
-        <div>사이트에 대해 얼마나 만족하십니까?</div>
-        <div class="stars" id="surveyStars" role="radiogroup" aria-label="만족도 별점">
-          <button class="star-btn" type="button" data-value="1" aria-label="1점" aria-pressed="false">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          </button>
-          <button class="star-btn" type="button" data-value="2" aria-label="2점" aria-pressed="false">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          </button>
-          <button class="star-btn" type="button" data-value="3" aria-label="3점" aria-pressed="false">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          </button>
-          <button class="star-btn" type="button" data-value="4" aria-label="4점" aria-pressed="false">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          </button>
-          <button class="star-btn" type="button" data-value="5" aria-label="5점" aria-pressed="false">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          </button>
-        </div>
-        <textarea id="surveyComment" class="input survey-comment" placeholder="코멘트(선택)"></textarea>
-        <div class="survey-actions">
-          <button id="surveySkip7d" class="disable-7d" type="button">7일간 다시 보지 않기</button>
-          <button id="surveySubmit" class="btn btn-primary" type="button">제출</button>
-        </div>
+      <div class="nearby-body">
+        <div id="nearbyStatus" class="pill">현재 위치 확인 중...</div>
+        <ul id="nearbyList" class="nearby-list"></ul>
       </div>
     </div>
   </div>
@@ -456,85 +381,149 @@
       obsTitle.observe(modalTitleEl, { childList:true });
     }
 
-    // 만족도 조사 팝업 로직
-    (function initSurvey(){
-      const backdrop = document.getElementById('surveyBackdrop');
-      const stars = document.getElementById('surveyStars');
-      const submitBtn = document.getElementById('surveySubmit');
-      const closeBtn = document.getElementById('surveyClose');
-      const skip7dBtn = document.getElementById('surveySkip7d');
-      const commentEl = document.getElementById('surveyComment');
+    // Kakao Places로 주변 맛집 검색 후 팝업 표시
+    (function initNearbyPopup(){
+      const btn = document.getElementById('btnMyLocation');
+      const backdrop = document.getElementById('nearbyBackdrop');
+      const closeBtn = document.getElementById('nearbyClose');
+      const statusEl = document.getElementById('nearbyStatus');
+      const listEl = document.getElementById('nearbyList');
+      const locEl = document.getElementById('nearbyLoc');
+      const reloadBtn = document.getElementById('nearbyReload');
 
-      let rating = 0;
-
-      function canShow() {
-        const done = localStorage.getItem('survey_done') === '1';
-        const blockUntil = parseInt(localStorage.getItem('survey_block_until') || '0', 10);
-        const sessionShown = sessionStorage.getItem('survey_shown') === '1';
-        return !done && Date.now() > blockUntil && !sessionShown;
+      // 역지오코딩: 위경도 -> "부산 남구" 형태
+      function reverseGeocode(lat, lon, onDone){
+        try{
+          if (!window.kakao || !kakao.maps || !kakao.maps.services) {
+            onDone(null);
+            return;
+          }
+          const geocoder = new kakao.maps.services.Geocoder();
+          geocoder.coord2RegionCode(lon, lat, (result, status) => {
+            if (status !== kakao.maps.services.Status.OK || !result?.length) {
+              onDone(null);
+              return;
+            }
+            // 행정동(H) 우선, 없으면 첫 번째 결과 사용
+            const pref = result.find(r => r.region_type === 'H') || result[0];
+            const sido = pref.region_1depth_name || "";
+            const sigungu = pref.region_2depth_name || "";
+            const text = [sido, sigungu].filter(Boolean).join(" ").trim();
+            onDone(text || null);
+          });
+        } catch {
+          onDone(null);
+        }
       }
-      function show() {
-        if (!backdrop) return;
+
+      function openPopup(){
         backdrop.classList.add('show');
-        backdrop.setAttribute('aria-hidden', 'false');
-        sessionStorage.setItem('survey_shown', '1'); // 이 세션에 1회만
+        backdrop.setAttribute('aria-hidden','false');
       }
-      function hide() {
-        if (!backdrop) return;
+      function closePopup(){
         backdrop.classList.remove('show');
-        backdrop.setAttribute('aria-hidden', 'true');
+        backdrop.setAttribute('aria-hidden','true');
       }
-      function paintStars(n){
-        rating = n;
-        const btns = stars ? stars.querySelectorAll('.star-btn') : [];
-        btns.forEach(btn => {
-          const v = Number(btn.dataset.value);
-          const active = v <= n;
-          btn.classList.toggle('active', active);
-          btn.setAttribute('aria-pressed', String(active));
+      if (closeBtn) closeBtn.addEventListener('click', closePopup);
+      if (backdrop) backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) closePopup(); });
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePopup(); });
+
+      // 의사 평점 생성 (장소명 기반 해시 => 3.5~5.0)
+      function pseudoRating(name){
+        let h = 0;
+        for (let i=0;i<name.length;i++){
+          h = (h * 31 + name.charCodeAt(i)) >>> 0;
+        }
+        const frac = (h % 1000) / 1000;            // 0~0.999
+        const rating = 3.5 + frac * 1.5;           // 3.5 ~ 5.0
+        return Math.round(rating * 10) / 10;       // 한 자리 소수
+      }
+      // 절반 별(½) 제거: 정수 개수의 별만 표시
+      function makeStars(r){
+        const n = Math.max(0, Math.min(5, Math.round(r))); // 0~5
+        return '★'.repeat(n) + '☆'.repeat(5 - n);
+      }
+
+      function renderPlaces(data){
+        listEl.innerHTML = "";
+        if (!data || !data.length){
+          statusEl.textContent = "주변 맛집 결과가 없습니다.";
+          return;
+        }
+        statusEl.textContent = `주변 맛집 ${data.length}곳`;
+        data.slice(0,10).forEach(place => {
+          const rating = pseudoRating(place.place_name);
+          const stars = makeStars(rating);
+          const li = document.createElement('li');
+            li.className = 'nearby-item';
+            li.innerHTML = `
+              <div class="name">${place.place_name}</div>
+              <div class="nearby-rating" aria-label="평점 ${rating}">
+                <span class="rating-value">${rating}</span>
+                <span class="stars" aria-hidden="true">${stars}</span>
+              </div>
+              <div class="addr">${place.road_address_name || place.address_name || ""}</div>
+              <div class="actions">
+                ${place.place_url ? `<a class="btn-link" href="${place.place_url}" target="_blank" rel="noopener">상세보기</a>`:""}
+                ${place.phone ? `<a class="btn-link" href="tel:${place.phone}">전화</a>`:""}
+              </div>
+            `;
+          listEl.appendChild(li);
         });
       }
 
-      if (stars) {
-        stars.addEventListener('click', (e) => {
-          const btn = e.target.closest('.star-btn');
-          if (!btn) return;
-          paintStars(Number(btn.dataset.value));
-        });
+      function searchKakaoPlaces(lat, lon){
+        if (!window.kakao || !kakao.maps || !kakao.maps.services){
+          statusEl.textContent = "Kakao Maps가 로드되지 않았습니다.";
+          return;
+        }
+        statusEl.textContent = "주변 맛집 검색 중...";
+        const ps = new kakao.maps.services.Places();
+        ps.keywordSearch(
+          '맛집',
+          (data, status) => {
+            if (status === kakao.maps.services.Status.OK) {
+              renderPlaces(data);
+            } else {
+              statusEl.textContent = "검색 결과가 없거나 오류가 발생했습니다.";
+            }
+          },
+          { location: new kakao.maps.LatLng(lat, lon), radius: 2000 }
+        );
       }
-      if (closeBtn) {
-        closeBtn.addEventListener('click', hide);
-      }
-      if (skip7dBtn) {
-        skip7dBtn.addEventListener('click', () => {
-          const until = Date.now() + 7*24*60*60*1000;
-          localStorage.setItem('survey_block_until', String(until));
-          hide();
-        });
-      }
-      if (submitBtn) {
-        submitBtn.addEventListener('click', () => {
-          if (rating < 1) { alert('별점을 선택해 주세요.'); return; }
-          const payload = {
-            rating,
-            comment: (commentEl?.value || '').trim(),
-            at: new Date().toISOString()
-          };
-          // 실제 전송이 없다면 로컬에 저장만
-          localStorage.setItem('survey_result', JSON.stringify(payload));
-          localStorage.setItem('survey_done', '1'); // 1회만 표시
-          hide();
-          alert('제출되었습니다. 감사합니다!');
-        });
-      }
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') hide();
-      });
 
-      // 30초 후 표시 (조건 충족 시)
-      window.addEventListener('load', () => {
-        setTimeout(() => { if (canShow()) show(); }, 30000);
-      });
+      function getLocationAndSearch(){
+        if (!('geolocation' in navigator)){
+          alert('브라우저가 위치 서비스를 지원하지 않습니다.');
+          return;
+        }
+        if (locEl) locEl.textContent = '위치 확인 중...';
+        statusEl.textContent = "현재 위치를 가져오는 중...";
+        listEl.innerHTML = "";
+        openPopup();
+        navigator.geolocation.getCurrentPosition(
+          (pos)=>{
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            // 좌표 -> 행정구역명 표시
+            reverseGeocode(lat, lon, (text) => {
+              if (locEl) {
+                locEl.textContent = text || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+              }
+            });
+            statusEl.textContent = "주변 맛집 검색 중...";
+            searchKakaoPlaces(lat, lon);
+          },
+          (err)=>{
+            statusEl.textContent = `위치 정보를 가져올 수 없습니다: ${err.message}`;
+            if (locEl) locEl.textContent = '오류';
+          },
+          { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
+        );
+      }
+
+      if (btn) btn.addEventListener('click', getLocationAndSearch);
+      if (reloadBtn) reloadBtn.addEventListener('click', getLocationAndSearch);
     })();
   </script>
 </body>
