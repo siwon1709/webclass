@@ -62,6 +62,84 @@
     .nearby-rating{display:flex;align-items:center;gap:6px;font-size:.78rem;}
     .nearby-rating .rating-value{font-weight:600;color:var(--text);}
     .nearby-rating .stars{font-size:.72rem;letter-spacing:1px;color:#fbbf24;}
+
+    /* AI 챗 위젯: FAB + 플로팅 창 */
+    .chat-fab{
+      position:fixed; right:18px; bottom:18px; z-index:220;
+      width:56px; height:56px; border-radius:50%;
+      border:none; cursor:pointer; color:#fff;
+      background:var(--primary, #2563eb);
+      box-shadow:0 12px 24px rgba(0,0,0,.2);
+      display:grid; place-items:center;
+    }
+    .chat-fab svg{width:22px;height:22px}
+    .chat-widget{
+      position:fixed; right:18px; bottom:86px; z-index:220;
+      width:min(360px, 92%); height:480px;
+      background:var(--bg); border:1px solid var(--border);
+      border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,.25);
+      display:none; flex-direction:column; overflow:hidden;
+    }
+    .chat-widget.show{ display:flex; }
+    .chat-header{
+      padding:10px 12px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      background:var(--card); font-weight:700;
+    }
+    .chat-close{ border:1px solid var(--border); background:transparent;
+      border-radius:10px; padding:6px 10px; cursor:pointer; }
+    .chat-messages{
+      padding:12px; gap:8px; display:flex; flex-direction:column;
+      overflow:auto; flex:1; background:var(--bg);
+    }
+    .msg{ max-width:80%; padding:8px 10px; border-radius:12px; white-space:pre-wrap; line-height:1.35; }
+    .msg.bot{ align-self:flex-start; background:var(--card); color:var(--text); border-top-left-radius:4px; }
+    .msg.user{ align-self:flex-end; background:var(--primary, #2563eb); color:#fff; border-top-right-radius:4px; }
+    .chat-input{
+      border-top:1px solid var(--border); padding:8px; display:flex; gap:8px; background:var(--bg);
+    }
+    .chat-input input{
+      flex:1; border:1px solid var(--border); background:var(--card);
+      color:var(--text); border-radius:10px; padding:8px 10px;
+    }
+    .chat-send{
+      border:1px solid var(--border); background:var(--card);
+      border-radius:10px; padding:8px 12px; cursor:pointer;
+    }
+
+    /* 클릭 가능한 로고 */
+    .brand .logo { cursor: pointer; }
+    /* 상담 힌트 말풍선 */
+    .chat-hint{
+      position:fixed;
+      /* JS에서 FAB 왼쪽으로 위치시킴 */
+      /* bottom:110px; */
+      /* right:84px;   */
+      background:var(--card);
+      border:1px solid var(--border);
+      padding:8px 12px;
+      border-radius:20px;
+      font-size:.75rem;
+      line-height:1.3;
+      box-shadow:0 8px 24px rgba(0,0,0,.18);
+      animation:chatHintFadeIn .35s ease;
+      z-index:221;
+    }
+    .chat-hint:after{
+      content:"";
+      position:absolute;
+      right:-6px;
+      top:50%;
+      width:12px; height:12px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-left:none; border-bottom:none;
+      transform:translateY(-50%) rotate(45deg);
+      border-radius:2px;
+    }
+    .chat-hint.fade-out{ animation:chatHintFadeOut .5s forwards; }
+    @keyframes chatHintFadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+    @keyframes chatHintFadeOut { to{opacity:0;transform:translateY(4px);} }
   </style>
   <!-- Kakao Maps SDK: 실제 앱키로 교체 -->
   <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9ea6307d093424b5d332f6838987fb7d&libraries=services"></script>
@@ -71,7 +149,7 @@
     <div class="container">
       <div class="nav">
         <div class="brand">
-          <div class="logo">TR</div>
+          <div class="logo" id="siteLogo" role="button" tabindex="0" aria-label="홈으로 새로고침" title="새로고침">TR</div>
           <div>여행자를 위한 맛집 · 관광명소</div>
         </div>
         <div class="tools">
@@ -219,6 +297,29 @@
         <ul id="nearbyList" class="nearby-list"></ul>
       </div>
     </div>
+  </div>
+
+  <!-- 플로팅 AI 버튼 -->
+  <button id="aiFab" class="chat-fab" aria-controls="chatWidget" aria-expanded="false" title="상담 열기">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H9l-4 4v-4a3 3 0 0 1-1-3V5Z" stroke="currentColor" stroke-width="1.8" fill="currentColor" />
+    </svg>
+  </button>
+
+  <!-- 대화형 AI 위젯 -->
+  <div id="chatWidget" class="chat-widget" role="dialog" aria-modal="false" aria-hidden="true" aria-label="실시간 상담">
+    <div class="chat-header">
+      <span>실시간 상담</span>
+      <span id="chatStatus" class="pill" style="font-size:.75rem">연결 대기</span>
+      <button id="chatClose" class="chat-close" aria-label="닫기">X</button>
+    </div>
+    <div id="chatMessages" class="chat-messages" aria-live="polite">
+      <div class="msg bot">상담 연결을 준비 중입니다. 잠시만 기다려 주세요.</div>
+    </div>
+    <form id="chatForm" class="chat-input">
+      <input id="chatInput" type="text" placeholder="메시지를 입력하세요..." aria-label="채팅 입력" disabled />
+      <button id="chatSend" class="chat-send" type="submit" disabled>전송</button>
+    </form>
   </div>
 
   <footer class="container">
@@ -462,7 +563,7 @@
                 <span class="rating-value">${rating}</span>
                 <span class="stars" aria-hidden="true">${stars}</span>
               </div>
-              <div class="addr">${place.road_address_name || place.address_name || ""}</div>
+              <div class="addr">${place.road_address_name || place.address_name || ""}</div>ㄴ
               <div class="actions">
                 ${place.place_url ? `<a class="btn-link" href="${place.place_url}" target="_blank" rel="noopener">상세보기</a>`:""}
                 ${place.phone ? `<a class="btn-link" href="tel:${place.phone}">전화</a>`:""}
@@ -524,6 +625,274 @@
 
       if (btn) btn.addEventListener('click', getLocationAndSearch);
       if (reloadBtn) reloadBtn.addEventListener('click', getLocationAndSearch);
+    })();
+
+    /* AI 챗 위젯 */
+    (function initLiveSupport(){
+      const fab = document.getElementById('aiFab');
+      const widget = document.getElementById('chatWidget');
+      const closeBtn = document.getElementById('chatClose');
+      const form = document.getElementById('chatForm');
+      const input = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('chatSend');
+      const messages = document.getElementById('chatMessages');
+      const statusEl = document.getElementById('chatStatus');
+
+      // 설정: WebSocket 서버 주소를 실제 상담 서버로 교체하세요.
+      const WS_URL = 'ws://localhost:3000/support'; // 예: wss://your-domain.com/ws/support
+      let ws = null;
+      let reconnectTimer = null;
+      let opening = false;
+
+      function setStatus(text){
+        if (statusEl) statusEl.textContent = text;
+      }
+      function setEnabled(yes){
+        input.disabled = !yes;
+        sendBtn.disabled = !yes;
+      }
+      function appendMessage(who, text){
+        const row = document.createElement('div');
+        row.className = 'msg ' + (who === 'user' ? 'user' : 'bot'); // bot 클래스를 상담사 메시지로 재사용
+        row.textContent = text;
+        messages.appendChild(row);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function connect(){
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+        if (opening) return;
+        opening = true;
+        try{
+          ws = new WebSocket(WS_URL);
+        }catch(e){
+          opening = false;
+          setStatus('연결 실패');
+          setEnabled(false);
+          scheduleReconnect();
+          return;
+        }
+
+        setStatus('연결 중...');
+        setEnabled(false);
+
+        ws.onopen = () => {
+          opening = false;
+          setStatus('연결됨');
+          setEnabled(true);
+          // 초기 핸드셰이크(선택)
+          const hello = {
+            type: 'hello',
+            city: (typeof state !== 'undefined' && state.city) ? state.city : '',
+            ua: navigator.userAgent,
+            role: 'user' // 추가: 사용자 역할 명시
+          };
+          try { ws.send(JSON.stringify(hello)); } catch {}
+        };
+
+        ws.onmessage = (ev) => {
+          // 서버는 {type:"message", text:"..."} 형태를 권장
+          try{
+            const data = JSON.parse(ev.data);
+            if (data && data.type === 'message' && typeof data.text === 'string'){
+              appendMessage('agent', data.text);
+              return;
+            }
+          }catch{}
+          // 텍스트일 경우 그대로 표시
+          if (typeof ev.data === 'string'){
+            appendMessage('agent', ev.data);
+          }
+        };
+
+        ws.onclose = () => {
+          opening = false;
+          setStatus('연결 끊김 · 재연결 시도 중');
+          setEnabled(false);
+          scheduleReconnect();
+        };
+
+        ws.onerror = () => {
+          setStatus('오류 · 재연결 시도 중');
+        };
+      }
+
+      function scheduleReconnect(){
+        if (reconnectTimer) return;
+        reconnectTimer = setTimeout(()=>{
+          reconnectTimer = null;
+          connect();
+        }, 2000);
+      }
+
+      function openChat(){
+        widget.classList.add('show');
+        widget.setAttribute('aria-hidden','false');
+        fab.setAttribute('aria-expanded','true');
+        connect();
+        setTimeout(()=> input?.focus(), 0);
+      }
+      function closeChat(){
+        widget.classList.remove('show');
+        widget.setAttribute('aria-hidden','true');
+        fab.setAttribute('aria-expanded','false');
+        // 연결은 유지(상담 지속). 필요 시 아래 주석 해제해 닫을 때 연결 끊기
+        // try { ws?.close(); } catch {}
+      }
+
+      fab?.addEventListener('click', ()=> widget.classList.contains('show') ? closeChat() : openChat());
+      closeBtn?.addEventListener('click', closeChat);
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && widget.classList.contains('show')) closeChat(); });
+
+      form?.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const q = (input.value || '').trim();
+        if (!q) return;
+        if (!ws || ws.readyState !== WebSocket.OPEN){
+          appendMessage('agent', '아직 상담 연결이 되지 않았습니다. 잠시 후 다시 시도해주세요.');
+          return;
+        }
+        appendMessage('user', q);
+        input.value = '';
+        try { ws.send(JSON.stringify({ type:'message', text:q })); } catch {
+          appendMessage('agent', '메시지 전송 중 오류가 발생했습니다.');
+        }
+      });
+    })();
+
+    // 로고 클릭/키보드로 새로고침
+    (function initLogoReload(){
+      const logo = document.getElementById('siteLogo') || document.querySelector('.brand .logo');
+      if (!logo) return;
+      const reload = () => location.reload();
+      logo.addEventListener('click', reload);
+      logo.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          reload();
+        }
+      });
+    })();
+
+    /* 상담 힌트 반복: 1) 5초 대기 2) "도움이 필요하신가요?" 5초 3) "버튼을 눌러보세요!" 5초 4) 15초 휴식 반복 */
+    (function initChatHint(){
+      const FAB_ID = 'aiFab';
+      const DELAY_BEFORE_FIRST = 5000;
+      const SHOW_DURATION = 5000;
+      const REST_DURATION = 15000;
+
+      let started = false;
+      let currentEl = null;
+      let timers = [];
+
+      function clearTimers(){
+        timers.forEach(t => clearTimeout(t));
+        timers = [];
+      }
+
+      function isChatOpen(){
+        return document.getElementById('chatWidget')?.classList.contains('show');
+      }
+
+      function stopAll(){
+        clearTimers();
+        if (currentEl?.isConnected) currentEl.remove();
+        currentEl = null;
+        started = false;
+      }
+
+      function positionHint(el){
+        const fab = document.getElementById(FAB_ID);
+        if (!fab || !el) return;
+        const gap = 10;
+        const fabRect = fab.getBoundingClientRect();
+        el.style.visibility = 'hidden';
+        el.style.top = '0px';
+        el.style.left = '0px';
+        const elRect = el.getBoundingClientRect();
+        let top = fabRect.top + (fabRect.height - elRect.height) / 2;
+        let left = fabRect.left - gap - elRect.width;
+        const minPad = 8;
+        top = Math.max(minPad, Math.min(top, window.innerHeight - elRect.height - minPad));
+        left = Math.max(minPad, Math.min(left, window.innerWidth - elRect.width - minPad));
+        el.style.top = `${top}px`;
+        el.style.left = `${left}px`;
+        el.style.visibility = 'visible';
+      }
+
+      function createBubble(text){
+        const el = document.createElement('div');
+        el.className = 'chat-hint';
+        el.setAttribute('role','status');
+        el.textContent = text;
+        document.body.appendChild(el);
+        positionHint(el);
+        const onResize = () => { if (el.isConnected) positionHint(el); };
+        window.addEventListener('resize', onResize, { passive:true });
+        const fab = document.getElementById(FAB_ID);
+        if (fab){
+          fab.addEventListener('click', () => {
+            if (el.isConnected) el.remove();
+            window.removeEventListener('resize', onResize);
+            stopAll();
+          }, { once:true });
+        }
+        return { el, onResize };
+      }
+
+      function removeBubble(ref){
+        if (!ref) return;
+        const { el, onResize } = ref;
+        if (el.isConnected){
+          el.classList.add('fade-out');
+          setTimeout(() => {
+            if (el.isConnected) el.remove();
+            window.removeEventListener('resize', onResize);
+          }, 500);
+        } else {
+          window.removeEventListener('resize', onResize);
+        }
+        if (currentEl === el) currentEl = null;
+      }
+
+      function cycle(){
+        if (!started || isChatOpen()) { stopAll(); return; }
+
+        // Step 1: 5초 대기 후 첫 문구
+        timers.push(setTimeout(() => {
+          if (isChatOpen()) { stopAll(); return; }
+          const first = createBubble('도움이 필요하신가요?');
+          currentEl = first.el;
+          // 첫 문구 5초 노출
+          timers.push(setTimeout(() => {
+            removeBubble(first);
+            if (isChatOpen()) { stopAll(); return; }
+            // 두번째 문구 즉시 표시
+            const second = createBubble('버튼을 눌러보세요!');
+            currentEl = second.el;
+            // 두번째 5초 노출
+            timers.push(setTimeout(() => {
+              removeBubble(second);
+              if (isChatOpen()) { stopAll(); return; }
+              // 15초 휴식 후 반복
+              timers.push(setTimeout(() => {
+                if (isChatOpen()) { stopAll(); return; }
+                cycle();
+              }, REST_DURATION));
+            }, SHOW_DURATION));
+          }, SHOW_DURATION));
+        }, DELAY_BEFORE_FIRST));
+      }
+
+      function start(){
+        if (started) return;
+        started = true;
+        cycle();
+      }
+
+      ['scroll','mousemove','keydown','touchstart'].forEach(ev =>
+        window.addEventListener(ev, start, { passive:true, once:true })
+      );
     })();
   </script>
 </body>
