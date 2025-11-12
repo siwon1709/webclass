@@ -140,6 +140,24 @@
     .chat-hint.fade-out{ animation:chatHintFadeOut .5s forwards; }
     @keyframes chatHintFadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
     @keyframes chatHintFadeOut { to{opacity:0;transform:translateY(4px);} }
+
+    /* 설문조사 팝업 */
+    .survey-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;align-items:center;justify-content:center;z-index:300;padding:18px;}
+    .survey-backdrop.show{display:flex;}
+    .survey-modal{width:min(420px,92%);background:var(--bg);border:1px solid var(--border);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden;display:flex;flex-direction:column;}
+    .survey-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:.95rem;}
+    .survey-close{background:transparent;border:1px solid var(--border);border-radius:10px;padding:4px 10px;cursor:pointer;font-size:.8rem;}
+    .survey-body{padding:16px 18px;display:flex;flex-direction:column;gap:14px;}
+    .survey-stars{display:flex;gap:6px;}
+    .survey-stars button{width:42px;height:42px;font-size:1.3rem;line-height:1;border:1px solid var(--border);background:var(--card);color:#f3b41b;border-radius:12px;cursor:pointer;transition:.15s;}
+    .survey-stars button[aria-pressed="true"],
+    .survey-stars button:hover{background:#f3b41b;color:#fff;}
+    .survey-comment{width:100%;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:12px;padding:10px 12px;font-size:.85rem;resize:vertical;min-height:90px;}
+    .survey-actions{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+    .survey-actions .row{display:flex;gap:8px;justify-content:space-between;}
+    .survey-submit{flex:1;}
+    .survey-hide7{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:.75rem;cursor:pointer;}
+    .survey-toast{padding:12px;border:1px solid var(--border);background:var(--card);border-radius:12px;text-align:center;font-size:.9rem;font-weight:600;color:var(--primary,#2563eb);}
   </style>
   <!-- Kakao Maps SDK: 실제 앱키로 교체 -->
   <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9ea6307d093424b5d332f6838987fb7d&libraries=services"></script>
@@ -320,6 +338,42 @@
       <input id="chatInput" type="text" placeholder="메시지를 입력하세요..." aria-label="채팅 입력" disabled />
       <button id="chatSend" class="chat-send" type="submit" disabled>전송</button>
     </form>
+  </div>
+
+  <!-- 설문조사 팝업 -->
+  <div id="surveyBackdrop" class="survey-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="survey-modal" role="document">
+      <div class="survey-head">
+        <span>사이트 만족도 평가</span>
+        <button type="button" class="survey-close" id="surveyClose" aria-label="닫기">X</button>
+      </div>
+      <form id="surveyForm" class="survey-body">
+        <div>
+          <label style="font-weight:600;display:block;margin-bottom:6px;">별점</label>
+          <div class="survey-stars" id="surveyStars" role="radiogroup" aria-label="별점 선택(1~5)">
+            <button type="button" data-val="1" aria-label="1점" aria-pressed="false">★</button>
+            <button type="button" data-val="2" aria-label="2점" aria-pressed="false">★</button>
+            <button type="button" data-val="3" aria-label="3점" aria-pressed="false">★</button>
+            <button type="button" data-val="4" aria-label="4점" aria-pressed="false">★</button>
+            <button type="button" data-val="5" aria-label="5점" aria-pressed="false">★</button>
+          </div>
+        </div>
+        <div>
+          <label for="surveyComment" style="font-weight:600;display:block;margin-bottom:6px;">코멘트 (선택)</label>
+          <textarea id="surveyComment" class="survey-comment" placeholder="사이트 이용 소감이나 개선 의견을 남겨주세요."></textarea>
+        </div>
+        <div class="survey-actions">
+          <div class="row">
+            <button type="submit" id="surveySubmit" class="btn btn-primary survey-submit">제출</button>
+            <button type="button" id="surveyHide7" class="survey-hide7">7일간 보지않기</button>
+          </div>
+        </div>
+      </form>
+      <div id="surveyThanks" class="survey-body" style="display:none;">
+        <div class="survey-toast">소중한 의견 감사합니다</div>
+        <button type="button" class="btn" id="surveyThanksClose" style="margin-top:8px;">닫기</button>
+      </div>
+    </div>
   </div>
 
   <footer class="container">
@@ -893,6 +947,112 @@
       ['scroll','mousemove','keydown','touchstart'].forEach(ev =>
         window.addEventListener(ev, start, { passive:true, once:true })
       );
+    })();
+
+    /* === 설문조사 팝업 초기화 === */
+    (function initSiteSurvey(){
+      const DELAY_MS = 30000;
+      const LS_KEY_HIDE = 'surveyHideUntil';
+      const LS_KEY_SUBMITTED = 'surveySubmitted';
+      const backdrop = document.getElementById('surveyBackdrop');
+      const form = document.getElementById('surveyForm');
+      const closeBtn = document.getElementById('surveyClose');
+      const thanksView = document.getElementById('surveyThanks');
+      const thanksClose = document.getElementById('surveyThanksClose');
+      const starsWrap = document.getElementById('surveyStars');
+      const hide7Btn = document.getElementById('surveyHide7');
+      let currentRating = 0;
+      if (!backdrop) return;
+
+      function shouldSuppress(){
+        const hideUntil = parseInt(localStorage.getItem(LS_KEY_HIDE)||'0',10);
+        if (hideUntil && Date.now() < hideUntil) return true;
+        if (localStorage.getItem(LS_KEY_SUBMITTED)==='1') return true;
+        return false;
+      }
+
+      function open(){
+        backdrop.classList.add('show');
+        backdrop.setAttribute('aria-hidden','false');
+        // 포커스 첫 별
+        const firstStar = starsWrap?.querySelector('button');
+        firstStar && firstStar.focus();
+      }
+      function close(){
+        backdrop.classList.remove('show');
+        backdrop.setAttribute('aria-hidden','true');
+      }
+      function setRating(val){
+        currentRating = val;
+        starsWrap.querySelectorAll('button').forEach(btn=>{
+          const v = Number(btn.dataset.val);
+          btn.setAttribute('aria-pressed', v <= val ? 'true':'false');
+        });
+      }
+
+      // 별 인터랙션
+      starsWrap?.addEventListener('click', e=>{
+        const btn = e.target.closest('button[data-val]');
+        if (!btn) return;
+        setRating(Number(btn.dataset.val));
+      });
+      starsWrap?.addEventListener('mouseover', e=>{
+        const btn = e.target.closest('button[data-val]');
+        if (!btn) return;
+        const hoverVal = Number(btn.dataset.val);
+        starsWrap.querySelectorAll('button').forEach(b=>{
+          const v = Number(b.dataset.val);
+          b.style.background = v <= hoverVal ? '#f3b41b':'var(--card)';
+          b.style.color = v <= hoverVal ? '#fff':'#f3b41b';
+        });
+      });
+      starsWrap?.addEventListener('mouseleave', ()=>{
+        // restore selected
+        starsWrap.querySelectorAll('button').forEach(b=>{
+          const v = Number(b.dataset.val);
+          const selected = v <= currentRating;
+          b.style.background = selected ? '#f3b41b':'var(--card)';
+          b.style.color = selected ? '#fff':'#f3b41b';
+        });
+      });
+
+      // 제출
+      form?.addEventListener('submit', e=>{
+        e.preventDefault();
+        if (currentRating === 0){
+          alert('별점을 선택해주세요.');
+          return;
+        }
+        const comment = (document.getElementById('surveyComment')?.value||'').trim();
+        // 여기서 서버로 전송 로직 추가 가능 (fetch 등)
+        localStorage.setItem(LS_KEY_SUBMITTED,'1');
+        form.style.display='none';
+        thanksView.style.display='flex';
+      });
+
+      // 7일 숨김
+      hide7Btn?.addEventListener('click', ()=>{
+        const sevenDays = 7*24*60*60*1000;
+        localStorage.setItem(LS_KEY_HIDE, String(Date.now()+sevenDays));
+        close();
+      });
+
+      // 닫기
+      closeBtn?.addEventListener('click', close);
+      thanksClose?.addEventListener('click', close);
+      backdrop.addEventListener('click', e=>{
+        if (e.target === backdrop) close();
+      });
+      document.addEventListener('keydown', e=>{
+        if (e.key === 'Escape' && backdrop.classList.contains('show')) close();
+      });
+
+      // 지연 표시
+      if (!shouldSuppress()){
+        setTimeout(()=>{
+          if (!shouldSuppress()) open();
+        }, DELAY_MS);
+      }
     })();
   </script>
 </body>
