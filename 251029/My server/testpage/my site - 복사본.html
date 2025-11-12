@@ -142,7 +142,7 @@
     @keyframes chatHintFadeOut { to{opacity:0;transform:translateY(4px);} }
 
     /* 설문조사 팝업 */
-    .survey-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;align-items:center;justify-content:center;z-index:300;padding:18px;}
+    .survey-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;align-items:center;justify-content:center;z-index=300;padding:18px;}
     .survey-backdrop.show{display:flex;}
     .survey-modal{width:min(420px,92%);background:var(--bg);border:1px solid var(--border);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden;display:flex;flex-direction:column;}
     .survey-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:.95rem;}
@@ -951,7 +951,7 @@
 
     /* === 설문조사 팝업 초기화 === */
     (function initSiteSurvey(){
-      const DELAY_MS = 30000;
+      const DELAY_MS = 20000; // 20초로 변경
       const LS_KEY_HIDE = 'surveyHideUntil';
       const LS_KEY_SUBMITTED = 'surveySubmitted';
       const backdrop = document.getElementById('surveyBackdrop');
