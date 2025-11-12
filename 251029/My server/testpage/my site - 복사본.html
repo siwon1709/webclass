@@ -148,10 +148,34 @@
     .survey-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:.95rem;}
     .survey-close{background:transparent;border:1px solid var(--border);border-radius:10px;padding:4px 10px;cursor:pointer;font-size:.8rem;}
     .survey-body{padding:16px 18px;display:flex;flex-direction:column;gap:14px;}
-    .survey-stars{display:flex;gap:6px;}
-    .survey-stars button{width:42px;height:42px;font-size:1.3rem;line-height:1;border:1px solid var(--border);background:var(--card);color:#f3b41b;border-radius:12px;cursor:pointer;transition:.15s;}
-    .survey-stars button[aria-pressed="true"],
-    .survey-stars button:hover{background:#f3b41b;color:#fff;}
+    .survey-stars{
+      display:flex;
+      gap:6px;
+    }
+    .survey-stars button{
+      background:transparent;
+      border:none;
+      padding:4px;
+      margin:0;
+      cursor:pointer;
+      font-size:2rem;
+      line-height:1;
+      color:#ccc;
+      transition:color .15s, transform .15s;
+    }
+    .survey-stars button:hover,
+    .survey-stars button:focus-visible{
+      color:#f3b41b;
+      outline:none;
+      transform:scale(1.05);
+    }
+    .survey-stars button[aria-pressed="true"]{
+      color:#f3b41b;
+    }
+    .survey-stars button:focus-visible{
+      box-shadow:0 0 0 2px var(--primary,#2563eb);
+      border-radius:6px;
+    }
     .survey-comment{width:100%;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:12px;padding:10px 12px;font-size:.85rem;resize:vertical;min-height:90px;}
     .survey-actions{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
     .survey-actions .row{display:flex;gap:8px;justify-content:space-between;}
@@ -987,6 +1011,7 @@
         starsWrap.querySelectorAll('button').forEach(btn=>{
           const v = Number(btn.dataset.val);
           btn.setAttribute('aria-pressed', v <= val ? 'true':'false');
+          btn.style.color = (v <= val) ? '#f3b41b' : '#ccc';
         });
       }
 
@@ -1002,17 +1027,14 @@
         const hoverVal = Number(btn.dataset.val);
         starsWrap.querySelectorAll('button').forEach(b=>{
           const v = Number(b.dataset.val);
-          b.style.background = v <= hoverVal ? '#f3b41b':'var(--card)';
-          b.style.color = v <= hoverVal ? '#fff':'#f3b41b';
+          b.style.color = v <= hoverVal ? '#f3b41b':'#ccc';
         });
       });
       starsWrap?.addEventListener('mouseleave', ()=>{
-        // restore selected
         starsWrap.querySelectorAll('button').forEach(b=>{
           const v = Number(b.dataset.val);
           const selected = v <= currentRating;
-          b.style.background = selected ? '#f3b41b':'var(--card)';
-          b.style.color = selected ? '#fff':'#f3b41b';
+          b.style.color = selected ? '#f3b41b':'#ccc';
         });
       });
 
