@@ -19,11 +19,13 @@
 				<nav class="menu">
 					<a href="#features">기능</a>
 					<a href="#how">작동 방식</a>
-					<a href="#community">커뮤니티</a>
 				</nav>
 			</div>
 			<div class="nav-right">
+				<button id="notifications-btn" class="btn btn-ghost icon-only" title="알림">🔔<span id="notif-badge" class="badge hidden">0</span></button>
 				<button id="auth-open" class="btn btn-primary-glow">로그인/회원가입</button>
+				<button id="profile-btn" class="btn btn-ghost hidden">👤 프로필</button>
+				<button id="logout-btn" class="btn btn-tertiary hidden">로그아웃</button>
 				<button id="spotify-login" class="btn btn-secondary">Spotify 로그인</button>
 				<button id="spotify-logout" class="btn btn-tertiary">프로필</button>
 			</div>
@@ -125,7 +127,6 @@
 					</div>
 					<div class="row">
 						<button id="play-on-spotify" class="btn btn-secondary">내 Spotify 기기에서 재생 시도</button>
-						<button id="like" class="btn">좋아요</button>
 						<button id="skip" class="btn">다른 추천 보기</button>
 						<button id="reset-learning" class="btn btn-tertiary">학습 초기화</button>
 					</div>
@@ -272,6 +273,52 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Profile Modal -->
+		<div id="profile-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="profile-title">
+			<div class="profile-card card" role="document">
+				<div class="auth-head">
+					<div>
+						<div id="profile-title" class="auth-title">내 프로필</div>
+						<div class="auth-sub">사용자 정보 및 활동 기록</div>
+					</div>
+					<button id="profile-close" class="icon-btn" aria-label="닫기">✕</button>
+				</div>
+				<div class="profile-body">
+					<div class="profile-info">
+						<div class="profile-avatar">👤</div>
+						<div class="profile-details">
+							<div class="profile-name" id="profile-name">사용자</div>
+							<div class="profile-email" id="profile-email">user@example.com</div>
+						</div>
+					</div>
+					<div class="profile-tabs segmented">
+						<button id="profile-tab-played" class="seg active">재생한 곡</button>
+						<button id="profile-tab-liked" class="seg">좋아요 누른 곡</button>
+					</div>
+					<div class="profile-content">
+						<div id="profile-played-list" class="profile-list">
+							<p class="muted">재생 기록이 없습니다.</p>
+						</div>
+						<div id="profile-liked-list" class="profile-list hidden">
+							<p class="muted">좋아요 누른 곡이 없습니다.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Notifications Dropdown -->
+		<div id="notifications-dropdown" class="notif-dropdown hidden">
+			<div class="notif-header">
+				<span class="notif-title">알림</span>
+				<button id="clear-notifs" class="text-link">모두 지우기</button>
+			</div>
+			<div id="notif-list" class="notif-list">
+				<p class="muted" style="padding: 12px; text-align: center;">새 알림이 없습니다.</p>
+			</div>
+		</div>
+
 		<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 		<script src="./config.js"></script>
 		<script src="./app.js"></script>

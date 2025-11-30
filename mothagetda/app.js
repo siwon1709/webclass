@@ -9,6 +9,14 @@
   const spotifyLoginBtn = $('#spotify-login');
   const spotifyLogoutBtn = $('#spotify-logout');
 
+  const logoutBtn = document.getElementById('logout-btn');
+  const profileBtn = document.getElementById('profile-btn');
+  const notificationsBtn = document.getElementById('notifications-btn');
+  const notifBadge = document.getElementById('notif-badge');
+  const notifDropdown = document.getElementById('notifications-dropdown');
+  const notifList = document.getElementById('notif-list');
+  const clearNotifsBtn = document.getElementById('clear-notifs');
+
   const imageInput = $('#image-input');
   const preview = $('#preview');
   const previewImg = $('#preview-img');
@@ -23,7 +31,7 @@
 
   const embed = $('#embed');
   const playOnSpotify = $('#play-on-spotify');
-  const likeBtn = $('#like');
+  const likeBtn = null;
   const skipBtn = $('#skip');
   const resetLearningBtn = $('#reset-learning');
 
@@ -68,6 +76,16 @@
   const termsClose = document.getElementById('terms-close');
   const termsBody = document.getElementById('terms-body');
 
+  // Profile modal elements
+  const profileModal = document.getElementById('profile-modal');
+  const profileClose = document.getElementById('profile-close');
+  const profileName = document.getElementById('profile-name');
+  const profileEmail = document.getElementById('profile-email');
+  const profileTabPlayed = document.getElementById('profile-tab-played');
+  const profileTabLiked = document.getElementById('profile-tab-liked');
+  const profilePlayedList = document.getElementById('profile-played-list');
+  const profileLikedList = document.getElementById('profile-liked-list');
+
   // State
   let accessToken = null; // Spotify implicit flow token
   let currentPlaylistId = null;
@@ -75,6 +93,10 @@
   let camStream = null;
   let analyzeTimer = null;
   let lastEmotions = [];
+  let currentUser = null; // User session info
+  let notifications = []; // User notifications
+  let playedTracks = []; // History of played tracks
+  let likedTracks = []; // Liked tracks
 
   // Moods mapping to Spotify playlist IDs (public, region-dependent)
   const moodPlaylists = {
@@ -137,6 +159,28 @@
         if (saved) accessToken = saved;
       }
       updateSpotifyButtons();
+      
+      // Load user session
+      const savedUser = localStorage.getItem('demo.user');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        updateAuthUI();
+      }
+      
+      // Load notifications
+      const savedNotifs = localStorage.getItem('notifications');
+      if (savedNotifs) {
+        notifications = JSON.parse(savedNotifs);
+        updateNotificationBadge();
+      }
+      
+      // Load played tracks
+      const savedPlayed = localStorage.getItem('playedTracks');
+      if (savedPlayed) playedTracks = JSON.parse(savedPlayed);
+      
+      // Load liked tracks
+      const savedLiked = localStorage.getItem('likedTracks');
+      if (savedLiked) likedTracks = JSON.parse(savedLiked);
     } catch (e) {
       console.warn('Failed to load settings:', e);
     }
@@ -150,6 +194,159 @@
       spotifyLoginBtn.disabled = false;
       spotifyLogoutBtn.disabled = true;
     }
+  }
+
+  function updateAuthUI() {
+    const authOpenBtn = document.getElementById('auth-open');
+    if (currentUser) {
+      // User is logged in
+      authOpenBtn.classList.add('hidden');
+      if (logoutBtn) logoutBtn.classList.remove('hidden');
+      if (profileBtn) profileBtn.classList.remove('hidden');
+    } else {
+      // User is logged out
+      authOpenBtn.classList.remove('hidden');
+      if (logoutBtn) logoutBtn.classList.add('hidden');
+      if (profileBtn) profileBtn.classList.add('hidden');
+    }
+  }
+
+  function addNotification(type, message) {
+    const notif = {
+      id: Date.now(),
+      type, // 'like', 'analysis', 'info'
+      message,
+      time: new Date().toISOString(),
+      unread: true
+    };
+    notifications.unshift(notif);
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+    updateNotificationBadge();
+    renderNotifications();
+  }
+
+  function updateNotificationBadge() {
+    const unreadCount = notifications.filter(n => n.unread).length;
+    if (notifBadge) {
+      if (unreadCount > 0) {
+        notifBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        notifBadge.classList.remove('hidden');
+      } else {
+        notifBadge.classList.add('hidden');
+      }
+    }
+  }
+
+  function renderNotifications() {
+    if (!notifList) return;
+    if (notifications.length === 0) {
+      notifList.innerHTML = '<p class="muted" style="padding: 12px; text-align: center;">새 알림이 없습니다.</p>';
+      return;
+    }
+    
+    const icons = { like: '❤️', analysis: '🎭', info: 'ℹ️' };
+    notifList.innerHTML = notifications.map(n => {
+      const icon = icons[n.type] || 'ℹ️';
+      const time = formatTimeAgo(new Date(n.time));
+      const unreadClass = n.unread ? 'unread' : '';
+      return `
+        <div class="notif-item ${unreadClass}" data-id="${n.id}">
+          <div class="notif-icon">${icon}</div>
+          <div class="notif-content">
+            <div class="notif-text">${n.message}</div>
+            <div class="notif-time">${time}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    // Mark as read on click
+    notifList.querySelectorAll('.notif-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const id = parseInt(item.getAttribute('data-id'));
+        const notif = notifications.find(n => n.id === id);
+        if (notif) {
+          notif.unread = false;
+          localStorage.setItem('notifications', JSON.stringify(notifications));
+          updateNotificationBadge();
+          renderNotifications();
+        }
+      });
+    });
+  }
+
+  function formatTimeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return '방금 전';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}분 전`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    const days = Math.floor(hours / 24);
+    return `${days}일 전`;
+  }
+
+  function addPlayedTrack(mood, playlistId) {
+    const track = {
+      id: Date.now(),
+      mood,
+      playlistId,
+      time: new Date().toISOString()
+    };
+    playedTracks.unshift(track);
+    if (playedTracks.length > 50) playedTracks = playedTracks.slice(0, 50); // Keep last 50
+    localStorage.setItem('playedTracks', JSON.stringify(playedTracks));
+  }
+
+  function renderProfilePlayed() {
+    if (!profilePlayedList) return;
+    if (playedTracks.length === 0) {
+      profilePlayedList.innerHTML = '<p class="muted">재생 기록이 없습니다.</p>';
+      return;
+    }
+    
+    profilePlayedList.innerHTML = playedTracks.map(t => {
+      const time = formatTimeAgo(new Date(t.time));
+      return `
+        <div class="profile-item">
+          <div class="profile-item-icon">🎵</div>
+          <div class="profile-item-details">
+            <div class="profile-item-title">무드: ${t.mood}</div>
+            <div class="profile-item-time">${time}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderProfileLiked() {
+    if (!profileLikedList) return;
+    if (likedTracks.length === 0) {
+      profileLikedList.innerHTML = '<p class="muted">좋아요 누른 곡이 없습니다.</p>';
+      return;
+    }
+    
+    profileLikedList.innerHTML = likedTracks.map(t => {
+      const time = formatTimeAgo(new Date(t.time));
+      return `
+        <div class="profile-item">
+          <div class="profile-item-icon">❤️</div>
+          <div class="profile-item-details">
+            <div class="profile-item-title">${t.title || '플레이리스트'}</div>
+            <div class="profile-item-time">${time}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('demo.user');
+    updateAuthUI();
+    setStatus('로그아웃되었습니다.');
+    openModal(authModal);
+    switchAuth('login');
   }
 
   // ===== Auth UI helpers =====
@@ -363,6 +560,16 @@
       setResult(result);
       setEmbedByMood(result.mood);
       setStatus('완료! 플레이리스트를 재생해보세요.');
+      
+      // Add notification for completed analysis
+      if (currentUser) {
+        addNotification('analysis', `감정 분석 완료: ${result.emotion} (${result.mood})`);
+      }
+      
+      // Track played
+      if (currentPlaylistId) {
+        addPlayedTrack(result.mood, currentPlaylistId);
+      }
     } catch (err) {
       console.error(err);
       setStatus(`에러: ${err.message}`);
@@ -499,7 +706,7 @@
   spotifyLoginBtn.addEventListener('click', spotifyLogin);
   spotifyLogoutBtn.addEventListener('click', spotifyLogout);
   playOnSpotify.addEventListener('click', onPlayOnSpotify);
-  likeBtn && likeBtn.addEventListener('click', () => { if (currentPlaylistId) { record('like', currentPlaylistId); setStatus('좋아요 반영됨'); } });
+  // 좋아요 버튼 기능 제거됨
   skipBtn && skipBtn.addEventListener('click', () => { if (currentMood) { record('skip', currentPlaylistId); setEmbedByMood(currentMood); setStatus('다른 추천을 표시했습니다.'); } });
   resetLearningBtn && resetLearningBtn.addEventListener('click', () => { localStorage.removeItem('prefs'); setStatus('학습 데이터가 초기화되었습니다.'); });
   startCamBtn && startCamBtn.addEventListener('click', startCam);
@@ -558,7 +765,9 @@
     e.preventDefault();
     if (!canEnableSignup()) { refreshSignupButton(); return; }
     const user = { name: suName.value.trim(), email: suEmail.value.trim() };
+    currentUser = user;
     localStorage.setItem('demo.user', JSON.stringify(user));
+    updateAuthUI();
     alert('회원가입이 완료되었습니다. 환영합니다!');
     closeModal(authModal);
   });
@@ -568,7 +777,9 @@
     const pass = (loginPass && loginPass.value) || '';
     if (!email || !pass) { alert('이메일과 비밀번호를 입력해 주세요.'); return; }
     // Demo: store minimal session flag
+    currentUser = { email };
     localStorage.setItem('demo.user', JSON.stringify({ email }));
+    updateAuthUI();
     alert('로그인되었습니다.');
     closeModal(authModal);
   });
@@ -588,4 +799,51 @@
   });
   if (termsClose) termsClose.addEventListener('click', () => closeModal(termsModal));
   if (termsModal) termsModal.addEventListener('click', (e) => { if (e.target === termsModal) closeModal(termsModal); });
+
+  // Logout button
+  if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
+  // Profile button and modal
+  if (profileBtn) profileBtn.addEventListener('click', () => {
+    if (currentUser) {
+      if (profileName) profileName.textContent = currentUser.name || currentUser.email || '사용자';
+      if (profileEmail) profileEmail.textContent = currentUser.email || '';
+      renderProfilePlayed();
+      renderProfileLiked();
+      openModal(profileModal);
+    }
+  });
+  if (profileClose) profileClose.addEventListener('click', () => closeModal(profileModal));
+  if (profileModal) profileModal.addEventListener('click', (e) => { if (e.target === profileModal) closeModal(profileModal); });
+  if (profileTabPlayed) profileTabPlayed.addEventListener('click', () => {
+    profileTabPlayed.classList.add('active');
+    profileTabLiked.classList.remove('active');
+    profilePlayedList.classList.remove('hidden');
+    profileLikedList.classList.add('hidden');
+  });
+  if (profileTabLiked) profileTabLiked.addEventListener('click', () => {
+    profileTabLiked.classList.add('active');
+    profileTabPlayed.classList.remove('active');
+    profileLikedList.classList.remove('hidden');
+    profilePlayedList.classList.add('hidden');
+  });
+
+  // Notifications button and dropdown
+  if (notificationsBtn) notificationsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    notifDropdown.classList.toggle('hidden');
+    renderNotifications();
+  });
+  if (clearNotifsBtn) clearNotifsBtn.addEventListener('click', () => {
+    notifications = [];
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+    updateNotificationBadge();
+    renderNotifications();
+  });
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (notifDropdown && !notifDropdown.classList.contains('hidden') && !notificationsBtn.contains(e.target)) {
+      notifDropdown.classList.add('hidden');
+    }
+  });
 })();

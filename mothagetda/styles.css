@@ -142,3 +142,37 @@ input[type="text"], input[type="password"], input[type="email"] { width: 100%; p
 
 /* Auth open button tweaks on navbar */
 .navbar #auth-open { order: -1; }
+
+/* Icon-only button */
+.btn.icon-only { position: relative; padding: 8px 12px; }
+.badge { position: absolute; top: 2px; right: 2px; background: var(--danger); color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; font-weight: 600; }
+.badge.hidden { display: none; }
+
+/* Profile Modal */
+.profile-card { width: min(680px, 94vw); border-radius: 18px; overflow: hidden; max-height: 85vh; display: flex; flex-direction: column; }
+.profile-body { padding: 16px; overflow: auto; flex: 1; }
+.profile-info { display: flex; align-items: center; gap: 14px; padding: 12px; background: rgba(255,255,255,0.04); border-radius: 12px; margin-bottom: 12px; }
+.profile-avatar { width: 56px; height: 56px; display: grid; place-items: center; background: linear-gradient(135deg, #7c3aed, #4f46e5); border-radius: 50%; font-size: 24px; }
+.profile-name { font-weight: 600; font-size: 18px; }
+.profile-email { color: var(--muted); font-size: 14px; }
+.profile-tabs { margin: 12px 0; }
+.profile-list { margin-top: 12px; }
+.profile-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; margin-bottom: 8px; }
+.profile-item-icon { font-size: 20px; }
+.profile-item-details { flex: 1; }
+.profile-item-title { font-weight: 600; font-size: 14px; }
+.profile-item-time { color: var(--muted); font-size: 12px; }
+
+/* Notifications Dropdown */
+.notif-dropdown { position: absolute; top: 58px; right: 16px; width: 360px; max-width: calc(100vw - 32px); background: var(--panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 12px 36px rgba(0,0,0,0.5); z-index: 100; }
+.notif-dropdown.hidden { display: none; }
+.notif-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.notif-title { font-weight: 600; }
+.notif-list { max-height: 400px; overflow: auto; }
+.notif-item { display: flex; align-items: start; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: background 120ms ease; }
+.notif-item:hover { background: rgba(255,255,255,0.04); }
+.notif-item.unread { background: rgba(79,140,255,0.08); }
+.notif-icon { font-size: 20px; }
+.notif-content { flex: 1; }
+.notif-text { font-size: 14px; margin-bottom: 4px; }
+.notif-time { color: var(--muted); font-size: 12px; }
