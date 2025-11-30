@@ -336,7 +336,7 @@
 
   function promptDemoMood() {
     const options = ['happy', 'sad', 'angry', 'surprise', 'neutral', 'disgust', 'fear', 'tired', 'chill'];
-    const mood = prompt(`데모 모드: 무드를 선택해 입력하세요\n${options.join(', ')}`, 'happy');
+    const mood = prompt(`테스트 모드: 무드를 선택해 입력하세요\n${options.join(', ')}`, 'happy');
     if (!mood) return null;
     return { emotion: mood, confidence: null, mood: mood.toLowerCase() };
   }
