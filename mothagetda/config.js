@@ -6,8 +6,8 @@ window.APP_CONFIG = {
     redirectUri: window.location.origin + window.location.pathname,
   },
   facepp: {
-    key: "YOUR_FACEPP_API_KEY",
-    secret: "YOUR_FACEPP_API_SECRET",
+    key: "Pq9lHpOm02Bb2Dbh-ExsPS6Phc2LMYkD",
+    secret: "_RX1WqgNdgQo--Xvsh8wZsJfuNGhxmNV",
     endpoint: "https://api-us.faceplusplus.com/facepp/v3/detect"
   },
   realtime: {

@@ -8,7 +8,6 @@
 		<meta name="description" content="얼굴 표정 감정 분석으로 맞춤 음악을 재생하는 AI Mood Player" />
 	</head>
 	<body>
-		<canvas id="starfield"></canvas>
 		<!-- Top Navigation -->
 		<header class="navbar">
 			<div class="nav-left">
@@ -20,20 +19,16 @@
 				<nav class="menu">
 					<a href="#features">기능</a>
 					<a href="#how">작동 방식</a>
-					<a href="./community.html">커뮤니티</a>
+					<a href="#community">커뮤니티</a>
 				</nav>
 			</div>
 			<div class="nav-right">
 				<button id="auth-open" class="btn btn-primary-glow">로그인/회원가입</button>
-				<button id="profile-btn" class="btn btn-tertiary" style="display:none">프로필</button>
-				<button id="app-logout" class="btn" style="display:none">로그아웃</button>
 				<button id="spotify-login" class="btn btn-secondary">Spotify 로그인</button>
-				<button id="spotify-logout" class="btn btn-tertiary">Spotify 로그아웃</button>
+				<button id="spotify-logout" class="btn btn-tertiary">프로필</button>
 			</div>
 		</header>
 
-		<!-- App Content Wrapper (hidden until auth) -->
-		<div id="app-content">
 		<!-- Hero -->
 		<section class="hero">
 			<h1>당신의 감정이 완벽한 플레이리스트를 만듭니다</h1>	
@@ -180,14 +175,87 @@
 		<footer class="footer">
 			<p>Built with Spotify Embed & Web API, Face++ API (optional), face-api.js. 이 데모는 교육/개발 용도입니다.</p>
 		</footer>
-		<!-- Community entry card instead of embedded frames -->
-		<section class="container" id="community-entry">
-			<div class="card" style="padding: 20px; display: grid; gap: 10px; justify-items: center;">
-				<h2 class="section-title">Mood Community</h2>
-				<p class="section-sub">감정과 음악을 공유하는 전용 커뮤니티 페이지로 이동하세요.</p>
-				<a class="btn btn-primary-glow" href="./community.html" aria-label="커뮤니티로 이동">커뮤니티 바로가기</a>
+
+		<!-- Auth Modal: 로그인 / 회원가입 -->
+		<div id="auth-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="auth-title">
+			<div class="auth-card card" role="document">
+				<div class="auth-head">
+					<div class="auth-brand">
+						<div class="logo">🎵</div>
+						<div>
+							<div id="auth-title" class="auth-title">AI-Music-Mood-Player</div>
+							<div class="auth-sub">당신의 감정을 음악으로</div>
+						</div>
+					</div>
+					<button id="auth-close" class="icon-btn" aria-label="닫기">✕</button>
+				</div>
+				<div class="auth-tabs segmented">
+					<button id="auth-tab-login" class="seg active">로그인</button>
+					<button id="auth-tab-signup" class="seg">회원가입</button>
+				</div>
+				<div class="auth-body">
+					<!-- Login form -->
+					<form id="login-form" class="form" novalidate>
+						<label for="login-email">이메일</label>
+						<input id="login-email" type="email" placeholder="you@example.com" autocomplete="email" required />
+						<label for="login-password">비밀번호</label>
+						<input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+						<div class="row">
+							<button id="login-submit" type="submit" class="btn primary" style="flex:1">로그인</button>
+						</div>
+						<div class="auth-links">
+							<button type="button" class="text-link" id="goto-signup">회원가입</button>
+							<button type="button" class="text-link" id="forgot-pass">비밀번호 찾기</button>
+						</div>
+					</form>
+
+					<!-- Signup form -->
+					<form id="signup-form" class="form hidden" novalidate>
+						<label for="su-name">이름</label>
+						<input id="su-name" type="text" placeholder="홍길동" autocomplete="name" required />
+						<label for="su-email">이메일</label>
+						<input id="su-email" type="email" placeholder="you@example.com" autocomplete="email" required />
+						<label for="su-pass">비밀번호</label>
+						<input id="su-pass" type="password" placeholder="8자 이상" autocomplete="new-password" required />
+						<label for="su-pass2">비밀번호 확인</label>
+						<input id="su-pass2" type="password" placeholder="다시 입력" autocomplete="new-password" required />
+
+						<div class="consent card">
+							<div class="consent-head">개인정보 및 약관 동의</div>
+							<label class="checkbox-row">
+								<input id="consent-all" type="checkbox" />
+								<span>전체 동의</span>
+							</label>
+							<hr class="consent-sep" />
+							<div class="consent-items">
+								<label class="checkbox-row">
+									<input id="consent-tos" type="checkbox" data-required="true" />
+									<span>[필수] 서비스 이용약관</span>
+									<button type="button" class="text-link more" data-doc="tos">자세히 보기 ›</button>
+								</label>
+								<label class="checkbox-row">
+									<input id="consent-privacy" type="checkbox" data-required="true" />
+									<span>[필수] 개인정보 수집/이용</span>
+									<button type="button" class="text-link more" data-doc="privacy">자세히 보기 ›</button>
+								</label>
+								<label class="checkbox-row">
+									<input id="consent-marketing" type="checkbox" />
+									<span>[선택] 마케팅 정보 수신</span>
+									<button type="button" class="text-link more" data-doc="marketing">자세히 보기 ›</button>
+								</label>
+							</div>
+						</div>
+
+						<div class="row">
+							<button id="signup-submit" type="submit" class="btn primary" disabled style="flex:1">회원가입</button>
+						</div>
+						<div class="auth-links">
+							<button type="button" class="text-link" id="goto-login">이미 계정이 있으신가요? 로그인</button>
+						</div>
+					</form>
+				</div>
 			</div>
-		</section>
+		</div>
 
 		<!-- Terms Modal (optional detail) -->
 		<div id="terms-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="terms-title">
@@ -204,161 +272,6 @@
 				</div>
 			</div>
 		</div>
-
-		<!-- Profile Modal -->
-		<div id="profile-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="profile-title">
-			<div class="auth-card card mypage-modal" role="document">
-				<div class="auth-head">
-					<div>
-						<div id="profile-title" class="auth-title">마이페이지</div>
-						<div class="auth-sub">프로필 · 설정 · 활동 기록</div>
-					</div>
-					<button id="profile-close" class="icon-btn" aria-label="닫기">✕</button>
-				</div>
-				<div class="auth-body mypage-body">
-					<div class="account-grid">
-						<!-- Profile Card -->
-						<div class="card acc-card profile-card">
-							<div class="profile-top">
-								<div class="avatar" id="my-avatar">🙂</div>
-								<div class="profile-basic">
-									<div class="profile-name" id="my-name">-</div>
-									<div class="profile-email" id="my-email">-</div>
-								</div>
-							</div>
-							<div class="profile-actions">
-								<button class="btn btn-ghost" id="edit-account">계정 정보 수정</button>
-								<button class="btn btn-ghost" id="change-pass">비밀번호 변경</button>
-								<button class="btn btn-tertiary" id="profile-logout">로그아웃</button>
-							</div>
-						</div>
-
-						<!-- Settings / Logging Module -->
-						<div class="card acc-card settings-card">
-							<h3>설정</h3>
-							<label class="toggle-row">
-								<input type="checkbox" id="activity-log-toggle" />
-								<span>사용 기록 저장 활성화</span>
-							</label>
-							<div class="hint small muted">활성화하면 Mood 선택, 재생된 음악, 좋아요/스킵 등이 기록됩니다.</div>
-							<button class="btn btn-ghost" id="open-theme-settings">테마 설정</button>
-						</div>
-
-						<!-- Activity Hint Module -->
-						<div class="card acc-card info-card">
-							<h3>기록 안내</h3>
-							<p class="muted">활동 기록을 저장하여 과거 감정과 음악 취향을 돌아볼 수 있습니다.</p>
-							<ul class="mini-list">
-								<li>무드 감정 분석 결과</li>
-								<li>재생한 플레이리스트</li>
-								<li>좋아요/스킵 동작</li>
-							</ul>
-						</div>
-
-						<!-- Activity History -->
-						<div class="card acc-card history-card">
-							<div class="hist-head">
-								<h3>활동 기록</h3>
-								<div class="filters segmented" id="history-filters">
-									<button class="seg active" data-filter="all">전체</button>
-									<button class="seg" data-filter="mood">무드</button>
-									<button class="seg" data-filter="play">음악 재생</button>
-									<button class="seg" data-filter="pref">좋아요/스킵</button>
-								</div>
-							</div>
-							<div id="history-empty" class="empty muted hidden">아직 기록이 없습니다.</div>
-							<ul id="history-list" class="history-list"></ul>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- Community Extension Frames -->
-		<section id="community" class="community container">
-			<aside class="community-sidebar" id="community-sidebar">
-				<div class="side-brand">
-					<div class="side-title">Mood Player</div>
-					<div class="side-sub">Community</div>
-				</div>
-				<nav class="side-nav" id="side-nav">
-					<button class="side-item active" data-view="feed">🏠 <span>홈</span></button>
-					<button class="side-item" data-view="notifications">🔔 <span>알림</span><span class="badge-count" id="notif-badge" style="display:none"></span></button>
-					<button class="side-item" data-view="profile">👤 <span>프로필</span></button>
-					<button class="side-item" data-view="theme">⚙ <span>설정</span></button>
-				</nav>
-				<div class="side-bottom">
-					<button id="open-share" class="btn btn-primary-glow side-share-btn">+ 새 무드 공유</button>
-				</div>
-			</aside>
-			<div class="community-main">
-				<h2 class="section-title">Mood Community</h2>
-				<p class="section-sub">공유된 감정과 음악을 탐색해보세요</p>
-				<!-- Feed Frame -->
-				<div class="frame frame-feed active" id="frame-feed">
-					<div class="feed-filters chip-row" id="feed-filter-chips">
-						<button class="chip active" data-filter="all">전체</button>
-						<button class="chip" data-filter="mine">내 무드</button>
-						<button class="chip" data-filter="follow">팔로잉</button>
-						<button class="chip" data-filter="trend">인기</button>
-					</div>
-					<div class="feed-column" id="feed-grid"></div>
-				</div>
-				<!-- Share Creator Frame -->
-			<div class="frame frame-share" id="frame-share">
-				<div class="share-layout">
-					<div class="creator-panel card">
-						<h3>오늘의 무드 공유</h3>
-						<div class="mood-buttons" id="mood-buttons">
-							<button class="mood-btn" data-mood="Chill">Chill</button>
-							<button class="mood-btn" data-mood="Focus">Focus</button>
-							<button class="mood-btn" data-mood="Happy">Happy</button>
-							<button class="mood-btn" data-mood="Sad">Sad</button>
-							<button class="mood-btn" data-mood="Angry">Angry</button>
-							<button class="mood-btn" data-mood="Chill">Chill</button>
-						</div>
-						<textarea id="mood-comment" placeholder="오늘의 기분/상황을 적어보세요" rows="4"></textarea>
-						<input type="text" id="current-track" placeholder="현재 듣는 곡 또는 플레이리스트" />
-						<button id="share-submit" class="btn btn-primary-glow" disabled>공유하기</button>
-					</div>
-					<div class="preview-panel card" id="share-preview">
-						<h3>공유 카드 미리보기</h3>
-						<div class="preview-card-inner">
-							<div class="p-header"><span class="p-avatar">🎧</span><span class="p-nick" id="preview-nick">User</span><span class="p-time" id="preview-time">--:--</span></div>
-							<div class="p-mood" id="preview-mood">#Mood</div>
-							<div class="p-comment" id="preview-comment">코멘트를 입력하세요.</div>
-							<div class="p-track" id="preview-track">트랙 정보 없음</div>
-							<div class="action-bar">
-								<button class="icon-btn act like" data-act="like">♡</button>
-								<button class="icon-btn act comment" data-act="comment">💬</button>
-								<button class="icon-btn act bookmark" data-act="bookmark">🔖</button>
-								<button class="icon-btn act share" data-act="share">⤴</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-				<!-- Theme Settings Frame -->
-			<div class="frame frame-theme" id="frame-theme">
-				<h3>테마 커스터마이징</h3>
-				<div class="theme-grid" id="theme-grid">
-					<div class="theme-card" data-theme="darkNeon"><div class="t-preview darkNeon"></div><div class="t-name">Dark + Neon</div></div>
-					<div class="theme-card" data-theme="lightPastel"><div class="t-preview lightPastel"></div><div class="t-name">Light + Pastel</div></div>
-					<div class="theme-card" data-theme="neonRetro"><div class="t-preview neonRetro"></div><div class="t-name">Neon Retro</div></div>
-					<div class="theme-card" data-theme="minimalBlack"><div class="t-preview minimalBlack"></div><div class="t-name">Minimal Black</div></div>
-				</div>
-				<button id="apply-theme" class="btn btn-primary-glow" disabled>테마 적용</button>
-			</div>
-				<!-- Notifications Frame -->
-			<div class="frame frame-notifications" id="frame-notifications">
-				<h3>알림 센터</h3>
-				<ul class="notif-list" id="notif-list"></ul>
-			</div>
-			</div>
-		</section>
-
-	<!-- Floating Notifications Button (mobile / global) -->
-	<button id="floating-notif-btn" class="floating-btn" aria-label="알림 보기">🔔</button>
 		<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 		<script src="./config.js"></script>
 		<script src="./app.js"></script>
