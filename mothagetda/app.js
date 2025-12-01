@@ -120,6 +120,30 @@
     ],
   };
 
+  const moodEmojis = {
+    happy: '😊',
+    sad: '😢',
+    angry: '😠',
+    surprise: '😲',
+    neutral: '😐',
+    disgust: '🤢',
+    fear: '😨',
+    tired: '😴',
+    chill: '😌'
+  };
+
+  const moodLabels = {
+    happy: '행복',
+    sad: '슬픔',
+    angry: '분노',
+    surprise: '놀람',
+    neutral: '평온',
+    disgust: '혐오',
+    fear: '두려움',
+    tired: '피곤',
+    chill: '차분'
+  };
+
   // Utilities
   function setStatus(msg) {
     statusEl.textContent = msg || '';
@@ -317,6 +341,66 @@
     }
     
     return true;
+  }
+
+  function analyzeMoodStats() {
+    const allTracks = [...playedTracks, ...likedTracks];
+    
+    if (allTracks.length === 0) {
+      return null;
+    }
+    
+    // Count moods
+    const moodCount = {};
+    allTracks.forEach(track => {
+      const mood = track.mood;
+      if (mood) {
+        moodCount[mood] = (moodCount[mood] || 0) + 1;
+      }
+    });
+    
+    // Sort by count and get top 3
+    const sortedMoods = Object.entries(moodCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3);
+    
+    const total = allTracks.length;
+    
+    return sortedMoods.map(([mood, count]) => ({
+      mood,
+      count,
+      percentage: Math.round((count / total) * 100)
+    }));
+  }
+
+  function renderMoodStats() {
+    const moodStatsEl = document.getElementById('mood-stats');
+    if (!moodStatsEl) return;
+    
+    const stats = analyzeMoodStats();
+    
+    if (!stats) {
+      moodStatsEl.innerHTML = '<p class="muted">분석할 데이터가 없습니다. 음악을 재생하거나 좋아요를 눌러보세요!</p>';
+      return;
+    }
+    
+    moodStatsEl.innerHTML = stats.map(stat => {
+      const emoji = moodEmojis[stat.mood] || '🎵';
+      const label = moodLabels[stat.mood] || stat.mood;
+      
+      return `
+        <div class="mood-stat-item">
+          <div class="mood-stat-emoji">${emoji}</div>
+          <div class="mood-stat-info">
+            <div class="mood-stat-label">${label}</div>
+            <div class="mood-stat-bar-container">
+              <div class="mood-stat-bar" style="width: ${stat.percentage}%"></div>
+            </div>
+          </div>
+          <div class="mood-stat-percentage">${stat.percentage}%</div>
+        </div>
+      `;
+    }).join('');
   }
 
   function renderProfilePlayed() {
@@ -795,6 +879,7 @@
     if (currentUser) {
       if (profileName) profileName.textContent = currentUser.name || currentUser.email || '사용자';
       if (profileEmail) profileEmail.textContent = currentUser.email || '';
+      renderMoodStats();
       renderProfilePlayed();
       renderProfileLiked();
       openModal(profileModal);
