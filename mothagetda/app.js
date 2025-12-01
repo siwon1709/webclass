@@ -35,19 +35,7 @@
   const skipBtn = $('#skip');
   const resetLearningBtn = $('#reset-learning');
 
-  // Webcam elements
-  const startCamBtn = $('#start-cam');
-  const stopCamBtn = $('#stop-cam');
-  const camVideo = $('#cam');
-  const overlay = $('#overlay');
-
-  // Tabs / CTA / Dropzone
-  const tabUpload = document.getElementById('tab-upload');
-  const tabWebcam = document.getElementById('tab-webcam');
-  const panelUpload = document.querySelector('.panel-upload');
-  const panelWebcam = document.querySelector('.panel-webcam');
-  const ctaUpload = document.getElementById('cta-upload');
-  const ctaWebcam = document.getElementById('cta-webcam');
+  // Dropzone
   const dropzone = document.getElementById('dropzone');
 
   // Auth modal elements
@@ -90,9 +78,6 @@
   let accessToken = null; // Spotify implicit flow token
   let currentPlaylistId = null;
   let currentMood = null;
-  let camStream = null;
-  let analyzeTimer = null;
-  let lastEmotions = [];
   let currentUser = null; // User session info
   let notifications = []; // User notifications
   let playedTracks = []; // History of played tracks
@@ -344,9 +329,8 @@
     currentUser = null;
     localStorage.removeItem('demo.user');
     updateAuthUI();
-    setStatus('로그아웃되었습니다.');
-    openModal(authModal);
-    switchAuth('login');
+    alert('로그아웃 성공');
+    closeModal(authModal);
   }
 
   // ===== Auth UI helpers =====
@@ -378,21 +362,7 @@
     if (signupSubmit) signupSubmit.disabled = !canEnableSignup();
   }
 
-  // Tab switching (upload/webcam)
-  function switchTab(mode) {
-    const isUpload = mode === 'upload';
-    if (tabUpload) tabUpload.classList.toggle('active', isUpload);
-    if (tabWebcam) tabWebcam.classList.toggle('active', !isUpload);
-    if (panelUpload) panelUpload.classList.toggle('hidden', !isUpload);
-    if (panelWebcam) panelWebcam.classList.toggle('hidden', isUpload);
-    if (isUpload) {
-      // leaving webcam
-      stopCam();
-    } else {
-      // ensure webcam active when switching
-      startCam();
-    }
-  }
+
 
   function spotifyLogin() {
     const clientId = (window.APP_CONFIG && window.APP_CONFIG.spotify && window.APP_CONFIG.spotify.clientId) || '';
@@ -609,86 +579,7 @@
     }
   }
 
-  // Realtime (face-api.js)
-  async function loadModels() {
-    const base = (window.APP_CONFIG && window.APP_CONFIG.realtime && window.APP_CONFIG.realtime.modelBaseUrl) || '/models';
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(base),
-      faceapi.nets.faceExpressionNet.loadFromUri(base),
-    ]);
-  }
 
-  function topExpression(expressions) {
-    let bestK = 'neutral'; let bestV = -1;
-    Object.keys(expressions).forEach(k => { if (expressions[k] > bestV) { bestV = expressions[k]; bestK = k; } });
-    return { key: bestK, value: bestV };
-  }
-  function expressionsToEmotionMood(expressions) {
-    const t = topExpression(expressions);
-    const emotionKey = t.key; // face-api keys: neutral, happy, sad, angry, fearful, disgusted, surprised
-    const map = { fearful: 'fear', disgusted: 'disgust', surprised: 'surprise' };
-    const norm = map[emotionKey] || emotionKey; // happy/sad/angry/neutral as-is
-    return { emotion: norm, mood: norm, confidence: t.value };
-  }
-  function drawOverlay(box, expressions) {
-    const ctx = overlay.getContext('2d');
-    const { width, height } = overlay;
-    ctx.clearRect(0, 0, width, height);
-    if (!box) return;
-    ctx.strokeStyle = '#4f8cff';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(box.x, box.y, box.width, box.height);
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(box.x, Math.max(0, box.y - 22), 180, 20);
-    ctx.fillStyle = '#e9eef7';
-    const top = topExpression(expressions);
-    ctx.fillText(`${top.key}: ${Math.round(top.value * 100)}%`, box.x + 6, Math.max(12, box.y - 6));
-  }
-  function majority(items) {
-    const counts = {};
-    items.forEach(k => { counts[k] = (counts[k] || 0) + 1; });
-    let bestK = null, bestC = -1;
-    Object.keys(counts).forEach(k => { if (counts[k] > bestC) { bestC = counts[k]; bestK = k; } });
-    return bestK;
-  }
-  async function startCam() {
-    try {
-      await loadModels();
-      camStream = await navigator.mediaDevices.getUserMedia({ video: { width: 720, height: 405 }, audio: false });
-      camVideo.srcObject = camStream;
-      await camVideo.play();
-      overlay.width = camVideo.videoWidth || camVideo.clientWidth;
-      overlay.height = camVideo.videoHeight || camVideo.clientHeight;
-      const interval = (window.APP_CONFIG && window.APP_CONFIG.realtime && window.APP_CONFIG.realtime.intervalMs) || 1200;
-      const windowN = (window.APP_CONFIG && window.APP_CONFIG.realtime && window.APP_CONFIG.realtime.smoothingWindow) || 5;
-      analyzeTimer = setInterval(async () => {
-        try {
-          const det = await faceapi.detectSingleFace(camVideo, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
-          if (!det) { drawOverlay(null, null); return; }
-          const dims = faceapi.matchDimensions(overlay, camVideo, true);
-          const resized = faceapi.resizeResults(det, dims);
-          drawOverlay(resized.detection.box, resized.expressions);
-          const { emotion, mood, confidence } = expressionsToEmotionMood(resized.expressions);
-          lastEmotions.push(mood);
-          if (lastEmotions.length > windowN) lastEmotions.shift();
-          const smoothed = majority(lastEmotions);
-          setResult({ emotion, mood: smoothed, confidence });
-          if (smoothed !== currentMood) { setEmbedByMood(smoothed); }
-        } catch (e) { /* ignore */ }
-      }, interval);
-      setStatus('웹캠 분석을 시작했습니다.');
-    } catch (e) {
-      console.error(e);
-      setStatus('웹캠을 시작할 수 없습니다: ' + e.message);
-    }
-  }
-  function stopCam() {
-    if (analyzeTimer) { clearInterval(analyzeTimer); analyzeTimer = null; }
-    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
-    const ctx = overlay.getContext('2d');
-    if (ctx) ctx.clearRect(0, 0, overlay.width, overlay.height);
-    setStatus('웹캠을 중지했습니다.');
-  }
 
   // Event listeners
   imageInput.addEventListener('change', () => {
@@ -709,16 +600,6 @@
   // 좋아요 버튼 기능 제거됨
   skipBtn && skipBtn.addEventListener('click', () => { if (currentMood) { record('skip', currentPlaylistId); setEmbedByMood(currentMood); setStatus('다른 추천을 표시했습니다.'); } });
   resetLearningBtn && resetLearningBtn.addEventListener('click', () => { localStorage.removeItem('prefs'); setStatus('학습 데이터가 초기화되었습니다.'); });
-  startCamBtn && startCamBtn.addEventListener('click', startCam);
-  stopCamBtn && stopCamBtn.addEventListener('click', stopCam);
-
-  // Tab buttons
-  tabUpload && tabUpload.addEventListener('click', () => switchTab('upload'));
-  tabWebcam && tabWebcam.addEventListener('click', () => switchTab('webcam'));
-
-  // CTA buttons in hero
-  ctaUpload && ctaUpload.addEventListener('click', () => { switchTab('upload'); imageInput && imageInput.click(); });
-  ctaWebcam && ctaWebcam.addEventListener('click', () => switchTab('webcam'));
 
   // Dropzone interactions
   if (dropzone) {
@@ -742,7 +623,6 @@
 
   // Init
   loadSettings();
-  switchTab('upload');
 
   // ===== Auth UI wiring =====
   if (authOpenBtn) authOpenBtn.addEventListener('click', () => { openModal(authModal); switchAuth('login'); });
@@ -846,4 +726,15 @@
       notifDropdown.classList.add('hidden');
     }
   });
+
+  // Hero CTA 버튼 이벤트
+  const ctaUploadBtn = document.getElementById('cta-upload');
+  if (ctaUploadBtn) {
+    ctaUploadBtn.addEventListener('click', () => {
+      const imageInput = document.getElementById('image-input');
+      if (imageInput) {
+        imageInput.click();
+      }
+    });
+  }
 })();

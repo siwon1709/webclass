@@ -37,13 +37,12 @@
 			<p class="hero-sub">AI가 얼굴 표정을 분석하고 지금 이 순간에 딱 맞는 음악을 자동으로 추천해 드립니다.</p>
 			<div class="cta-row">
 				<button id="cta-upload" class="btn btn-primary-glow">사진 업로드</button>
-				<button id="cta-webcam" class="btn btn-ghost">웹캠 사용</button>
 			</div>
 			<div class="features" id="features">
 				<div class="feature-card">
 					<div class="icon">⚡</div>
 					<div class="title">실시간 분석</div>
-					<div class="desc">웹캠으로 실시간 감정 분석</div>
+					<div class="desc">사진 실시간 감정 분석</div>
 				</div>
 				<div class="feature-card">
 					<div class="icon">🎵</div>
@@ -66,7 +65,6 @@
 					<div class="panel-header">
 						<div class="segmented">
 							<button id="tab-upload" class="seg active">사진 업로드</button>
-							<button id="tab-webcam" class="seg">웹캠 사용</button>
 						</div>
 					</div>
 
@@ -95,19 +93,6 @@
 						</div>
 						<p id="status" class="status"></p>
 					</div>
-
-					<!-- Webcam Panel -->
-					<div class="panel-body panel-webcam hidden">
-						<div class="cam-wrapper">
-							<video id="cam" autoplay playsinline muted></video>
-							<canvas id="overlay"></canvas>
-						</div>
-						<div class="row">
-							<button id="start-cam" class="btn primary">웹캠 시작</button>
-							<button id="stop-cam" class="btn">중지</button>
-						</div>
-						<p class="hint">on-device 모델(face-api.js)로 네트워크 지연 없이 실시간 분석합니다.</p>
-					</div>
 				</section>
 
 				<!-- Right: Recommendation / Results -->
@@ -122,7 +107,7 @@
 						<div class="placeholder-inner">
 							<div class="big-icon">대기중</div>
 							<div class="ph-title">음악 추천을 기다리는 중</div>
-							<div class="ph-desc">사진을 업로드하거나 웹캠으로 촬영하면 당신의 감정에 맞는 플레이리스트를 추천해드립니다.</div>
+							<div class="ph-desc">사진을 업로드하시면 당신의 감정에 맞는 플레이리스트를 추천해드립니다.</div>
 						</div>
 					</div>
 					<div class="row">
@@ -319,7 +304,6 @@
 			</div>
 		</div>
 
-		<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 		<script src="./config.js"></script>
 		<script src="./app.js"></script>
 	</body>
