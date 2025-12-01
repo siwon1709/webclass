@@ -106,6 +106,13 @@
 						<div class="result-line"><span class="label">무드:</span> <span id="mood-text">-</span></div>
 						<div class="result-line"><span class="label">신뢰도:</span> <span id="confidence-text">-</span></div>
 					</div>
+					
+					<!-- Quote Card -->
+					<div class="quote-card hidden" id="quote-card">
+						<div class="quote-text" id="quote-text"></div>
+						<div class="quote-author" id="quote-author"></div>
+					</div>
+					
 					<div id="embed" class="embed placeholder">
 						<div class="placeholder-inner">
 							<div class="big-icon">대기중</div>
@@ -114,6 +121,7 @@
 					</div>
 					<div class="row">
 						<button id="like-btn" class="btn btn-like">❤️ 좋아요</button>
+						<button id="share-btn" class="btn btn-ghost">🔗 공유하기</button>
 						<button id="skip" class="btn">다른 추천 보기</button>
 						<button id="reset-learning" class="btn btn-tertiary">학습 초기화</button>
 					</div>
@@ -277,6 +285,7 @@
 						<div class="profile-details">
 							<div class="profile-name" id="profile-name">사용자</div>
 							<div class="profile-email" id="profile-email">user@example.com</div>
+							<div id="mood-badge" class="mood-badge"></div>
 						</div>
 					</div>
 					
@@ -291,17 +300,82 @@
 						</div>
 					</div>
 					
-					<div class="profile-tabs segmented">
-						<button id="profile-tab-played" class="seg active">재생한 곡</button>
-						<button id="profile-tab-liked" class="seg">좋아요 누른 곡</button>
+					<!-- Recommended Playlist Section -->
+					<div class="recommended-playlist">
+						<div class="recommended-header">
+							<span class="recommended-icon">🎵</span>
+							<span class="recommended-title">당신을 위한 추천 플레이리스트</span>
+						</div>
+						<div id="recommended-embed" class="recommended-embed-container">
+							<p class="muted">분석 데이터를 기반으로 추천 플레이리스트가 표시됩니다.</p>
+						</div>
 					</div>
-					<div class="profile-content">
-						<div id="profile-played-list" class="profile-list">
-							<p class="muted">재생 기록이 없습니다.</p>
+					
+					<!-- Emotion History Timeline -->
+					<div class="emotion-timeline">
+						<div class="timeline-header">
+							<span class="timeline-icon">📊</span>
+							<span class="timeline-title">감정 기록 타임라인</span>
 						</div>
-						<div id="profile-liked-list" class="profile-list hidden">
-							<p class="muted">좋아요 누른 곡이 없습니다.</p>
+						<div id="emotion-timeline-list" class="timeline-list">
+							<p class="muted">감정 분석 기록이 없습니다.</p>
 						</div>
+					</div>
+					
+					<div class="profile-tabs segmented">
+						<button class="seg active" id="profile-tab-played">재생한 곡</button>
+						<button class="seg" id="profile-tab-liked">좋아요</button>
+					</div>
+					
+					<div id="profile-played-list" class="profile-list">
+						<!-- Dynamic content -->
+					</div>
+					
+					<div id="profile-liked-list" class="profile-list hidden">
+						<!-- Dynamic content -->
+					</div>
+					
+					<!-- 회원탈퇴 버튼 -->
+					<button class="btn btn-danger" id="delete-account-btn" style="width: 100%; margin-top: 16px;">
+						회원탈퇴
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Delete Account Modal -->
+		<div id="delete-account-modal" class="modal" aria-hidden="true">
+			<div class="auth-card" style="max-width: 450px;">
+				<div class="auth-head">
+					<div class="auth-brand">
+						<span class="auth-title">⚠️ 회원탈퇴</span>
+					</div>
+					<button class="icon-btn" id="delete-account-close" aria-label="닫기">✕</button>
+				</div>
+				<div class="auth-body">
+					<p style="margin-bottom: 16px; color: var(--danger); font-weight: 700;">
+						정말로 탈퇴하시겠습니까?
+					</p>
+					<p style="margin-bottom: 20px; color: var(--muted); font-size: 14px;">
+						• 모든 개인정보는 즉시 파기됩니다<br>
+						• 재생 기록, 좋아요 목록이 모두 삭제됩니다<br>
+						• 감정 분석 기록이 모두 삭제됩니다<br>
+						• 알림 내역이 모두 삭제됩니다<br>
+						<strong>이 작업은 되돌릴 수 없습니다.</strong>
+					</p>
+					
+					<div class="consent" style="margin-bottom: 16px;">
+						<div class="checkbox-row">
+							<input type="checkbox" id="delete-confirm-check">
+							<label for="delete-confirm-check" style="margin: 0; cursor: pointer; color: var(--text);">
+								위 내용을 모두 확인했으며, 회원탈퇴에 동의합니다.
+							</label>
+						</div>
+					</div>
+					
+					<div class="row" style="gap: 8px;">
+						<button class="btn btn-ghost" id="delete-cancel" style="flex: 1;">취소</button>
+						<button class="btn btn-danger" id="delete-confirm" disabled style="flex: 1;">회원탈퇴</button>
 					</div>
 				</div>
 			</div>
@@ -320,6 +394,50 @@
 
 		<!-- Toast Container -->
 		<div id="toast-container" class="toast-container"></div>
+
+		<!-- Help Button -->
+		<button class="help-btn" id="help-btn" title="분석 정보">ℹ️</button>
+
+		<!-- Info Modal -->
+		<div id="info-modal" class="info-modal" aria-hidden="true">
+			<div class="info-card">
+				<div class="info-header">
+					<span class="info-icon">🔬</span>
+					<span class="info-title">감정 분석 안내</span>
+				</div>
+				
+				<div class="info-section">
+					<div class="info-section-title">분석 정확도</div>
+					<ul class="info-list">
+						<li>Face++ AI 기술을 사용하여 얼굴 표정을 분석합니다</li>
+						<li>평균 85-90%의 정확도로 7가지 주요 감정을 인식합니다</li>
+						<li>조명, 각도, 표정의 명확도에 따라 결과가 달라질 수 있습니다</li>
+					</ul>
+				</div>
+				
+				<div class="info-section">
+					<div class="info-section-title">개인정보 보호</div>
+					<ul class="info-list">
+						<li>업로드된 사진은 분석 후 즉시 삭제됩니다</li>
+						<li>분석 결과는 로컬 저장소에만 저장됩니다</li>
+						<li>제3자와 데이터를 공유하지 않습니다</li>
+						<li>언제든지 브라우저 저장소를 삭제할 수 있습니다</li>
+					</ul>
+				</div>
+				
+				<div class="info-section">
+					<div class="info-section-title">더 정확한 분석을 위한 팁</div>
+					<ul class="info-list">
+						<li>얼굴이 정면으로 잘 보이는 사진 사용</li>
+						<li>밝은 조명에서 촬영된 사진 권장</li>
+						<li>안경, 마스크 등 얼굴을 가리는 물체 제거</li>
+						<li>자연스러운 표정이 가장 정확합니다</li>
+					</ul>
+				</div>
+				
+				<button class="btn btn-primary-glow info-close-btn" id="info-close">확인</button>
+			</div>
+		</div>
 
 		<script src="./config.js"></script>
 		<script src="./particles.js"></script>

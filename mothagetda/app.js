@@ -29,6 +29,7 @@
 
   const embed = $('#embed');
   const likeBtn = document.getElementById('like-btn');
+  const shareBtn = document.getElementById('share-btn');
   const skipBtn = $('#skip');
   const resetLearningBtn = $('#reset-learning');
 
@@ -71,6 +72,14 @@
   const profilePlayedList = document.getElementById('profile-played-list');
   const profileLikedList = document.getElementById('profile-liked-list');
 
+  // Delete account modal elements
+  const deleteAccountBtn = document.getElementById('delete-account-btn');
+  const deleteAccountModal = document.getElementById('delete-account-modal');
+  const deleteAccountClose = document.getElementById('delete-account-close');
+  const deleteConfirmCheck = document.getElementById('delete-confirm-check');
+  const deleteConfirmBtn = document.getElementById('delete-confirm');
+  const deleteCancelBtn = document.getElementById('delete-cancel');
+
   // State
   let currentPlaylistId = null;
   let currentMood = null;
@@ -78,6 +87,8 @@
   let notifications = [];
   let playedTracks = [];
   let likedTracks = [];
+
+  let emotionHistory = []; // 감정 기록 타임라인
 
   // Moods mapping to Spotify playlist IDs (public, region-dependent)
   const moodPlaylists = {
@@ -172,6 +183,10 @@
       // Load liked tracks
       const savedLiked = localStorage.getItem('likedTracks');
       if (savedLiked) likedTracks = JSON.parse(savedLiked);
+      
+      // Load emotion history
+      const savedHistory = localStorage.getItem('emotionHistory');
+      if (savedHistory) emotionHistory = JSON.parse(savedHistory);
     } catch (e) {
       console.warn('Failed to load settings:', e);
     }
@@ -403,6 +418,40 @@
     }).join('');
   }
 
+  function renderRecommendedPlaylist() {
+    const recommendedEmbedEl = document.getElementById('recommended-embed');
+    if (!recommendedEmbedEl) return;
+    
+    const stats = analyzeMoodStats();
+    
+    if (!stats || stats.length === 0) {
+      recommendedEmbedEl.innerHTML = '<p class="muted">분석 데이터를 기반으로 추천 플레이리스트가 표시됩니다.</p>';
+      return;
+    }
+    
+    // 가장 많이 들은 무드의 플레이리스트 추천
+    const topMood = stats[0].mood;
+    const playlistId = choosePlaylistForMood(topMood);
+    
+    const moodLabel = moodLabels[topMood] || topMood;
+    const moodEmoji = moodEmojis[topMood] || '🎵';
+    
+    recommendedEmbedEl.innerHTML = `
+      <div style="margin-bottom: 8px; text-align: center; color: var(--muted); font-size: 14px;">
+        ${moodEmoji} 당신은 <strong style="color: var(--text);">${moodLabel}</strong> 음악을 가장 좋아하시네요!
+      </div>
+      <iframe 
+        style="border-radius: 12px;" 
+        src="https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator" 
+        width="100%" 
+        height="152" 
+        frameBorder="0" 
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+        loading="lazy">
+      </iframe>
+    `;
+  }
+
   function renderProfilePlayed() {
     if (!profilePlayedList) return;
     if (playedTracks.length === 0) {
@@ -412,11 +461,14 @@
     
     profilePlayedList.innerHTML = playedTracks.map(t => {
       const time = formatTimeAgo(new Date(t.time));
+      const emoji = moodEmojis[t.mood] || '🎵';
+      const label = moodLabels[t.mood] || t.mood;
+      
       return `
         <div class="profile-item">
-          <div class="profile-item-icon">🎵</div>
+          <div class="profile-item-icon">${emoji}</div>
           <div class="profile-item-details">
-            <div class="profile-item-title">무드: ${t.mood}</div>
+            <div class="profile-item-title">${label} 플레이리스트</div>
             <div class="profile-item-time">${time}</div>
           </div>
         </div>
@@ -662,6 +714,9 @@
       setEmbedByMood(result.mood);
       setStatus('완료! 플레이리스트를 재생해보세요.');
       
+      // Add to emotion history
+      addEmotionToHistory(result.emotion, result.mood, result.confidence);
+      
       // Add notification for completed analysis
       if (currentUser) {
         addNotification('analysis', `감정 분석 완료: ${result.emotion} (${result.mood})`);
@@ -703,6 +758,35 @@
     }
   }
 
+  function shareCurrentMood() {
+    if (!currentMood) {
+      alert('먼저 감정을 분석해주세요.');
+      return;
+    }
+    
+    const emoji = moodEmojis[currentMood] || '🎵';
+    const label = moodLabels[currentMood] || currentMood;
+    const text = `${emoji} 지금 나의 기분은 "${label}"!\nAI Mood Player로 감정에 맞는 음악을 추천받았어요 🎵`;
+    const url = window.location.href;
+    
+    // Web Share API 지원 확인
+    if (navigator.share) {
+      navigator.share({
+        title: 'AI Mood Player',
+        text: text,
+        url: url
+      }).catch(err => console.log('Share cancelled', err));
+    } else {
+      // Fallback: 클립보드에 복사
+      const shareText = `${text}\n${url}`;
+      navigator.clipboard.writeText(shareText).then(() => {
+        showToast('info', '공유 텍스트가 클립보드에 복사되었습니다!');
+      }).catch(() => {
+        alert(`공유 텍스트:\n\n${shareText}`);
+      });
+    }
+  }
+
   // Event listeners
   imageInput.addEventListener('change', () => {
     const file = imageInput.files && imageInput.files[0];
@@ -717,6 +801,7 @@
     setStatus('데모 무드 적용됨');
   });
   if (likeBtn) likeBtn.addEventListener('click', onLike);
+  if (shareBtn) shareBtn.addEventListener('click', shareCurrentMood);
   skipBtn && skipBtn.addEventListener('click', () => { if (currentMood) { record('skip', currentPlaylistId); setEmbedByMood(currentMood); setStatus('다른 추천을 표시했습니다.'); } });
   resetLearningBtn && resetLearningBtn.addEventListener('click', () => { localStorage.removeItem('prefs'); setStatus('학습 데이터가 초기화되었습니다.'); });
 
@@ -879,7 +964,10 @@
     if (currentUser) {
       if (profileName) profileName.textContent = currentUser.name || currentUser.email || '사용자';
       if (profileEmail) profileEmail.textContent = currentUser.email || '';
+      renderMoodBadge();
       renderMoodStats();
+      renderRecommendedPlaylist();
+      renderEmotionTimeline();
       renderProfilePlayed();
       renderProfileLiked();
       openModal(profileModal);
@@ -929,4 +1017,180 @@
       }
     });
   }
+
+  function getTodayMoodBadge() {
+    const today = new Date().toDateString();
+    const todayEmotions = emotionHistory.filter(e => 
+      new Date(e.time).toDateString() === today
+    );
+    
+    if (todayEmotions.length === 0) return null;
+    
+    // 가장 최근 감정
+    const latestEmotion = todayEmotions[0];
+    const emoji = moodEmojis[latestEmotion.mood] || '🎵';
+    const label = moodLabels[latestEmotion.mood] || latestEmotion.mood;
+    
+    return { emoji, label, mood: latestEmotion.mood };
+  }
+
+  function renderMoodBadge() {
+    const moodBadgeEl = document.getElementById('mood-badge');
+    if (!moodBadgeEl) return;
+    
+    const badge = getTodayMoodBadge();
+    
+    if (!badge) {
+      moodBadgeEl.innerHTML = '<span style="font-size: 12px;">📊 오늘의 기분 분석 전</span>';
+      return;
+    }
+    
+    moodBadgeEl.innerHTML = `
+      <span style="font-size: 18px;">${badge.emoji}</span>
+      <span>오늘의 기분: ${badge.label}</span>
+    `;
+  }
+
+  function renderEmotionTimeline() {
+    const timelineListEl = document.getElementById('emotion-timeline-list');
+    if (!timelineListEl) return;
+    
+    if (emotionHistory.length === 0) {
+      timelineListEl.innerHTML = '<p class="muted">감정 분석 기록이 없습니다.</p>';
+      return;
+    }
+    
+    // 최근 10개만 표시
+    const recentHistory = emotionHistory.slice(0, 10);
+    
+    timelineListEl.innerHTML = recentHistory.map(entry => {
+      const emoji = moodEmojis[entry.mood] || '🎵';
+      const label = moodLabels[entry.mood] || entry.mood;
+      const time = formatTimeAgo(new Date(entry.time));
+      const color = getMoodColor(entry.mood);
+      const confidenceText = entry.confidence ? `${Math.round(entry.confidence * 100)}%` : '-';
+      
+      return `
+        <div class="timeline-item" style="border-left-color: ${color};">
+          <div class="timeline-item-emoji">${emoji}</div>
+          <div class="timeline-item-content">
+            <div class="timeline-item-mood">${label}</div>
+            <div class="timeline-item-time">${time}</div>
+          </div>
+          <div class="timeline-item-confidence">신뢰도 ${confidenceText}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function getMoodColor(mood) {
+    const colors = {
+      happy: '#22c55e',
+      sad: '#3b82f6',
+      angry: '#ef4444',
+      surprise: '#f59e0b',
+      neutral: '#6b7280',
+      disgust: '#84cc16',
+      fear: '#8b5cf6',
+      tired: '#06b6d4',
+      chill: '#14b8a6'
+    };
+    return colors[mood] || '#6b7280';
+  }
+
+  function addEmotionToHistory(emotion, mood, confidence) {
+    const entry = {
+      id: Date.now(),
+      emotion,
+      mood,
+      confidence,
+      time: new Date().toISOString()
+    };
+    
+    emotionHistory.unshift(entry);
+    if (emotionHistory.length > 100) emotionHistory = emotionHistory.slice(0, 100);
+    localStorage.setItem('emotionHistory', JSON.stringify(emotionHistory));
+  }
+
+  function deleteAccount() {
+    // 모든 데이터 삭제
+    localStorage.removeItem('demo.user');
+    localStorage.removeItem('notifications');
+    localStorage.removeItem('playedTracks');
+    localStorage.removeItem('likedTracks');
+    localStorage.removeItem('emotionHistory');
+    localStorage.removeItem('prefs');
+    
+    // 상태 초기화
+    currentUser = null;
+    notifications = [];
+    playedTracks = [];
+    likedTracks = [];
+    emotionHistory = [];
+    
+    // UI 업데이트
+    updateAuthUI();
+    updateNotificationBadge();
+    
+    // 모달 닫기
+    closeModal(deleteAccountModal);
+    closeModal(profileModal);
+    
+    // 확인 메시지
+    alert('회원탈퇴가 완료되었습니다.\n모든 정보가 삭제되었습니다.');
+    
+    // 페이지 새로고침 (선택사항)
+    // window.location.reload();
+  }
+
+  // Delete account modal logic
+  if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener('click', () => {
+      openModal(deleteAccountModal);
+      // 체크박스 초기화
+      if (deleteConfirmCheck) deleteConfirmCheck.checked = false;
+      if (deleteConfirmBtn) deleteConfirmBtn.disabled = true;
+    });
+  }
+
+  if (deleteAccountClose) {
+    deleteAccountClose.addEventListener('click', () => {
+      closeModal(deleteAccountModal);
+    });
+  }
+
+  if (deleteCancelBtn) {
+    deleteCancelBtn.addEventListener('click', () => {
+      closeModal(deleteAccountModal);
+    });
+  }
+
+  if (deleteAccountModal) {
+    deleteAccountModal.addEventListener('click', (e) => {
+      if (e.target === deleteAccountModal) {
+        closeModal(deleteAccountModal);
+      }
+    });
+  }
+
+  if (deleteConfirmCheck) {
+    deleteConfirmCheck.addEventListener('change', () => {
+      if (deleteConfirmBtn) {
+        deleteConfirmBtn.disabled = !deleteConfirmCheck.checked;
+      }
+    });
+  }
+
+  if (deleteConfirmBtn) {
+    deleteConfirmBtn.addEventListener('click', () => {
+      if (deleteConfirmCheck && deleteConfirmCheck.checked) {
+        const finalConfirm = confirm('정말로 탈퇴하시겠습니까?\n이 작업은 되돌릴 수 없습니다.');
+        if (finalConfirm) {
+          deleteAccount();
+        }
+      }
+    });
+  }
+
+  // ...existing code...
 })();
