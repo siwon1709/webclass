@@ -357,6 +357,17 @@
             <div class="profile-item-time">${time}</div>
           </div>
         </div>
+        <div class="profile-embed">
+          <iframe 
+            style="border-radius: 12px;" 
+            src="https://open.spotify.com/embed/playlist/${t.playlistId}?utm_source=generator" 
+            width="100%" 
+            height="152" 
+            frameBorder="0" 
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+            loading="lazy">
+          </iframe>
+        </div>
       `;
     }).join('');
   }
