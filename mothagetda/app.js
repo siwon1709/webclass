@@ -28,6 +28,7 @@
   const confidenceText = $('#confidence-text');
 
   const embed = $('#embed');
+  const likeBtn = document.getElementById('like-btn');
   const skipBtn = $('#skip');
   const resetLearningBtn = $('#reset-learning');
 
@@ -288,6 +289,34 @@
     playedTracks.unshift(track);
     if (playedTracks.length > 50) playedTracks = playedTracks.slice(0, 50); // Keep last 50
     localStorage.setItem('playedTracks', JSON.stringify(playedTracks));
+  }
+
+  function addLikedTrack(mood, playlistId) {
+    const track = {
+      id: Date.now(),
+      mood,
+      playlistId,
+      title: `${mood} 플레이리스트`,
+      time: new Date().toISOString()
+    };
+    
+    // 중복 체크 (같은 플레이리스트를 이미 좋아요 했는지)
+    const alreadyLiked = likedTracks.some(t => t.playlistId === playlistId);
+    if (alreadyLiked) {
+      showToast('info', '이미 좋아요를 누른 플레이리스트입니다.');
+      return false;
+    }
+    
+    likedTracks.unshift(track);
+    if (likedTracks.length > 50) likedTracks = likedTracks.slice(0, 50);
+    localStorage.setItem('likedTracks', JSON.stringify(likedTracks));
+    
+    // 알림 추가
+    if (currentUser) {
+      addNotification('like', `${mood} 무드 플레이리스트를 좋아요 했습니다!`);
+    }
+    
+    return true;
   }
 
   function renderProfilePlayed() {
@@ -553,6 +582,32 @@
     }
   }
 
+  function onLike() {
+    if (!currentPlaylistId || !currentMood) {
+      alert('먼저 음악을 추천받아주세요.');
+      return;
+    }
+    
+    if (!currentUser) {
+      alert('로그인이 필요한 기능입니다.');
+      openModal(authModal);
+      switchAuth('login');
+      return;
+    }
+    
+    const success = addLikedTrack(currentMood, currentPlaylistId);
+    if (success) {
+      record('like', currentPlaylistId);
+      setStatus('좋아요! 취향을 학습했습니다.');
+      
+      // 버튼 애니메이션
+      if (likeBtn) {
+        likeBtn.classList.add('liked');
+        setTimeout(() => likeBtn.classList.remove('liked'), 300);
+      }
+    }
+  }
+
   // Event listeners
   imageInput.addEventListener('change', () => {
     const file = imageInput.files && imageInput.files[0];
@@ -566,6 +621,7 @@
     setEmbedByMood(result.mood);
     setStatus('데모 무드 적용됨');
   });
+  if (likeBtn) likeBtn.addEventListener('click', onLike);
   skipBtn && skipBtn.addEventListener('click', () => { if (currentMood) { record('skip', currentPlaylistId); setEmbedByMood(currentMood); setStatus('다른 추천을 표시했습니다.'); } });
   resetLearningBtn && resetLearningBtn.addEventListener('click', () => { localStorage.removeItem('prefs'); setStatus('학습 데이터가 초기화되었습니다.'); });
 
