@@ -16,7 +16,9 @@ html, body {
 }
 .navbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: rgba(10,12,20,0.6); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
 .nav-left { display: flex; align-items: center; gap: 12px; }
-.logo { width: 32px; height: 32px; display: grid; place-items: center; background: linear-gradient(135deg, #7c3aed, #4f46e5); border-radius: 10px; box-shadow: 0 4px 18px rgba(124,58,237,0.35); }
+.logo-link { text-decoration: none; cursor: pointer; }
+.logo { width: 32px; height: 32px; display: grid; place-items: center; background: linear-gradient(135deg, #7c3aed, #4f46e5); border-radius: 10px; box-shadow: 0 4px 18px rgba(124,58,237,0.35); transition: transform 120ms ease, box-shadow 120ms ease; }
+.logo-link:hover .logo { transform: scale(1.05); box-shadow: 0 6px 24px rgba(124,58,237,0.5); }
 .brand .title { font-weight: 600; }
 .brand .caption { color: var(--muted); font-size: 12px; }
 .menu { display: flex; gap: 12px; margin-left: 8px; }
@@ -148,7 +150,13 @@ input[type="text"], input[type="password"], input[type="email"] { width: 100%; p
 .checkbox-row .more { margin-left: auto; }
 
 /* Terms modal */
-.terms-card { width: min(680px, 94vw); border-radius: 18px; overflow: hidden; }
+.terms-card { 
+  width: min(680px, 94vw); 
+  border-radius: 18px; 
+  overflow: hidden;
+  background: #1a1a2e;
+  opacity: 1;
+}
 .terms-body { padding: 16px; max-height: min(70vh, 720px); overflow: auto; }
 
 /* Auth open button tweaks on navbar */
