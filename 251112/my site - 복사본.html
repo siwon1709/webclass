@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>여행자를 위한 맛집 · 관광명소</title>
+  <meta name="description" content="여행자를 위한 맛집과 관광명소 추천, 검색, 즐겨찾기 기능 제공" />
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 주변 교통(역/정류장) 섹션 스타일 */
+    .transit {
+      margin-top:14px;
+      padding:12px 14px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--card);
+      font-size:.85rem;
+    }
+    .transit h3 {
+      margin:0 0 8px;
+      font-size:.9rem;
+      font-weight:700;
+    }
+    .transit-list {
+      margin:0;
+      padding:0;
+      list-style:none;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .transit-item {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      line-height:1.3;
+    }
+    .transit-item .icon { font-size:1rem; }
+    .transit-item .name { font-weight:600; }
+    .transit-item .distance { color:var(--muted); font-size:.78rem; }
+    .transit-empty { color:var(--muted); font-size:.78rem; }
+
+    /* 주변 맛집 팝업 */
+    .nearby-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:120}
+    .nearby-backdrop.show{display:flex}
+    .nearby-modal{width:min(520px,92%);background:var(--bg);border:1px solid var(--border);border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden}
+    .nearby-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);font-weight:700}
+    .nearby-close{border:1px solid var(--border);background:transparent;border-radius:10px;padding:6px 10px;cursor:pointer}
+    .nearby-body{padding:14px;max-height:60vh;overflow:auto}
+    .nearby-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+    .nearby-item{border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--card);display:flex;flex-direction:column;gap:6px}
+    .nearby-item .name{font-weight:700}
+    .nearby-item .addr{font-size:.88rem;color:var(--muted)}
+    .nearby-item .actions{display:flex;gap:8px}
+    .nearby-item .btn-link{border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:6px 10px;font-size:.86rem;text-decoration:none;color:inherit}
+    .nearby-meta{display:flex;align-items:center;gap:8px;font-size:.72rem;}
+    #nearbyLoc{padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:var(--card);color:var(--muted);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .nearby-reload{border:1px solid var(--border);background:var(--card);color:var(--text);padding:4px 10px;border-radius:8px;font-size:.7rem;cursor:pointer;}
+    .nearby-reload:hover{background:var(--bg);}
+
+    /* 평점 표시 */
+    .nearby-rating{display:flex;align-items:center;gap:6px;font-size:.78rem;}
+    .nearby-rating .rating-value{font-weight:600;color:var(--text);}
+    .nearby-rating .stars{font-size:.72rem;letter-spacing:1px;color:#fbbf24;}
+
+    /* AI 챗 위젯: FAB + 플로팅 창 */
+    .chat-fab{
+      position:fixed; right:18px; bottom:18px; z-index:220;
+      width:56px; height:56px; border-radius:50%;
+      border:none; cursor:pointer; color:#fff;
+      background:var(--primary, #2563eb);
+      box-shadow:0 12px 24px rgba(0,0,0,.2);
+      display:grid; place-items:center;
+    }
+    .chat-fab svg{width:22px;height:22px}
+    .chat-widget{
+      position:fixed; right:18px; bottom:86px; z-index:220;
+      width:min(360px, 92%); height:480px;
+      background:var(--bg); border:1px solid var(--border);
+      border-radius:16px; box-shadow:0 24px 60px rgba(0,0,0,.25);
+      display:none; flex-direction:column; overflow:hidden;
+    }
+    .chat-widget.show{ display:flex; }
+    .chat-header{
+      padding:10px 12px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      background:var(--card); font-weight:700;
+    }
+    .chat-close{ border:1px solid var(--border); background:transparent;
+      border-radius:10px; padding:6px 10px; cursor:pointer; }
+    .chat-messages{
+      padding:12px; gap:8px; display:flex; flex-direction:column;
+      overflow:auto; flex:1; background:var(--bg);
+    }
+    .msg{ max-width:80%; padding:8px 10px; border-radius:12px; white-space:pre-wrap; line-height:1.35; }
+    .msg.bot{ align-self:flex-start; background:var(--card); color:var(--text); border-top-left-radius:4px; }
+    .msg.user{ align-self:flex-end; background:var(--primary, #2563eb); color:#fff; border-top-right-radius:4px; }
+    .chat-input{
+      border-top:1px solid var(--border); padding:8px; display:flex; gap:8px; background:var(--bg);
+    }
+    .chat-input input{
+      flex:1; border:1px solid var(--border); background:var(--card);
+      color:var(--text); border-radius:10px; padding:8px 10px;
+    }
+    .chat-send{
+      border:1px solid var(--border); background:var(--card);
+      border-radius:10px; padding:8px 12px; cursor:pointer;
+    }
+
+    /* 클릭 가능한 로고 */
+    .brand .logo { cursor: pointer; }
+    /* 상담 힌트 말풍선 */
+    .chat-hint{
+      position:fixed;
+      /* JS에서 FAB 왼쪽으로 위치시킴 */
+      /* bottom:110px; */
+      /* right:84px;   */
+      background:var(--card);
+      border:1px solid var(--border);
+      padding:8px 12px;
+      border-radius:20px;
+      font-size:.75rem;
+      line-height:1.3;
+      box-shadow:0 8px 24px rgba(0,0,0,.18);
+      animation:chatHintFadeIn .35s ease;
+      z-index:221;
+    }
+    .chat-hint:after{
+      content:"";
+      position:absolute;
+      right:-6px;
+      top:50%;
+      width:12px; height:12px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-left:none; border-bottom:none;
+      transform:translateY(-50%) rotate(45deg);
+      border-radius:2px;
+    }
+    .chat-hint.fade-out{ animation:chatHintFadeOut .5s forwards; }
+    @keyframes chatHintFadeIn { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+    @keyframes chatHintFadeOut { to{opacity:0;transform:translateY(4px);} }
+
+    /* 설문조사 팝업 */
+    .survey-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;align-items:center;justify-content:center;
+      z-index:400; /* 오타 수정 및 우선순위 상승 */
+      padding:18px;
+    }
+    .survey-backdrop.show{display:flex;}
+    .survey-modal{width:min(420px,92%);background:var(--bg);border:1px solid var(--border);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden;display:flex;flex-direction:column;}
+    .survey-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:.95rem;}
+    .survey-close{background:transparent;border:1px solid var(--border);border-radius:10px;padding:4px 10px;cursor:pointer;font-size:.8rem;}
+    .survey-body{padding:16px 18px;display:flex;flex-direction:column;gap:14px;}
+    .survey-stars{
+      display:flex;
+      gap:6px;
+    }
+    .survey-stars button{
+      background:transparent;
+      border:none;
+      padding:4px;
+      margin:0;
+      cursor:pointer;
+      font-size:2rem;
+      line-height:1;
+      color:#ccc;
+      transition:color .15s, transform .15s;
+    }
+    .survey-stars button:hover,
+    .survey-stars button:focus-visible{
+      color:#f3b41b;
+      outline:none;
+      transform:scale(1.05);
+    }
+    .survey-stars button[aria-pressed="true"]{
+      color:#f3b41b;
+    }
+    .survey-stars button:focus-visible{
+      box-shadow:0 0 0 2px var(--primary,#2563eb);
+      border-radius:6px;
+    }
+    .survey-comment{width:100%;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:12px;padding:10px 12px;font-size:.85rem;resize:vertical;min-height:90px;}
+    .survey-actions{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+    .survey-actions .row{display:flex;gap:8px;justify-content:space-between;}
+    .survey-submit{flex:1;}
+    .survey-hide7{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:.75rem;cursor:pointer;}
+    .survey-toast{padding:12px;border:1px solid var(--border);background:var(--card);border-radius:12px;text-align:center;font-size:.9rem;font-weight:600;color:var(--primary,#2563eb);}
+  </style>
+  <!-- Kakao Maps SDK: 실제 앱키로 교체 -->
+  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9ea6307d093424b5d332f6838987fb7d&libraries=services"></script>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="nav">
+        <div class="brand">
+          <div class="logo" id="siteLogo" role="button" tabindex="0" aria-label="홈으로 새로고침" title="새로고침">TR</div>
+          <div>여행자를 위한 맛집 · 관광명소</div>
+        </div>
+        <div class="tools">
+          <button id="toggleTheme" class="btn" aria-label="다크 모드 토글">다크 모드</button>
+          <button id="showFavorites" class="btn" aria-label="즐겨찾기 보기">즐겨찾기</button>
+          <a class="btn-primary btn" href="#submit" aria-label="장소 제안">장소 제안하기</a>
+        </div>
+      </div>
+      <div class="searchbar">
+        <div class="search-controls">
+          <div class="search-input" role="search" aria-label="검색창 래퍼">
+            <input id="q" type="search" placeholder="도시, 장소명, 메뉴, 키워드 검색" aria-label="검색" />
+            <button class="search-icon" aria-hidden="true" tabindex="-1">
+              <!-- 간단한 돋보기 SVG -->
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2" fill="none"/>
+              </svg>
+            </button>
+          </div>
+          <button id="filterBtn" class="btn filter-btn" aria-expanded="false" aria-controls="filterMenu" title="필터">필터</button>
+          <button id="clear" class="btn" aria-label="초기화">초기화</button>
+          <!-- 내 위치 찾기 버튼 추가 -->
+          <button id="btnMyLocation" class="btn" type="button">내 주변 맛집 찾기</button>
+        </div>
+        <!-- 필터 드롭다운: 기존 셀렉트는 여기로 이동(아이디 동일) -->
+        <div id="filterMenu" class="filter-menu" hidden>
+          <div class="filter-row">
+            <label>정렬</label>
+            <select id="sort" class="input" aria-label="정렬">
+              <option value="popular">인기순</option>
+              <option value="rating">평점순</option>
+              <option value="recent">최신순</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <label>도시</label>
+            <select id="city" class="input" aria-label="도시 선택">
+              <option value="">전체 도시</option>
+              <option>부산</option>
+              <option>서울</option>
+              <option>제주</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <label>요리</label>
+            <select id="cuisine" class="input" aria-label="요리 종류">
+              <option value="">전체 요리</option>
+              <option value="korean">한식</option>
+              <option value="western">양식</option>
+              <option value="chinese">중식</option>
+              <option value="japanese">일식</option>
+              <option value="fusion">퓨전/기타</option>
+              <option value="other">기타</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <label>연령대</label>
+            <select id="ageFilter" class="input" aria-label="연령대 선택">
+              <option value="">전체 연령대</option>
+              <option value="10s">10대</option>
+              <option value="20s">20대</option>
+              <option value="30s">30대</option>
+              <option value="40s">40대</option>
+              <option value="50s">50대 이상</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px">
+            <button id="applyFilters" class="btn btn-primary">적용</button>
+            <button id="closeFilters" class="btn">닫기</button>
+          </div>
+        </div>
+
+        <!-- 카테고리 칩을 검색창 바로 아래로 이동 -->
+        <div class="chips" role="tablist" aria-label="카테고리" style="margin-top:12px">
+          <button class="chip active" data-filter="all" role="tab" aria-selected="true">전체</button>
+          <button class="chip" data-filter="food" role="tab">맛집</button>
+          <button class="chip" data-filter="sight" role="tab">관광명소</button>
+          <button class="chip" data-filter="cafe" role="tab">카페</button>
+          <button class="chip" data-filter="night" role="tab">야경/포인트</button>
+          <button class="chip" data-filter="budget" role="tab">가성비</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="results">
+      <div id="grid" class="grid" aria-live="polite"></div>
+      <div id="empty" class="empty" hidden>조건에 맞는 결과가 없습니다. 검색어나 필터를 변경해 보세요.</div>
+    </section>
+
+    <section id="submit" style="margin-top:28px">
+      <h2>장소 제안하기</h2>
+      <p class="pill">아래 양식을 통해 장소를 제안해보세요</p>
+      <form id="suggestForm" style="display:grid;gap:10px;grid-template-columns:repeat(2,1fr)">
+        <input class="input" name="name" placeholder="장소명" required />
+        <input class="input" name="city" placeholder="도시 (예: 부산)" required />
+        <input class="input" name="category" placeholder="카테고리 (맛집/관광명소/카페 등)" required />
+        <input class="input" name="address" placeholder="주소" />
+        <input class="input" name="price" placeholder="예상 가격대 (예: 15000~30000원)" />
+        <input class="input" name="tags" placeholder="태그 (쉼표로 구분)" />
+        <textarea class="input" name="desc" placeholder="설명" style="grid-column:1/-1" rows="4"></textarea>
+        <button class="btn btn-primary" type="submit" style="grid-column:1/-1">제출 </button>
+      </form>
+      <div id="suggestToast" class="pill" style="margin-top:8px"></div>
+    </section>
+  </main>
+
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <div id="modalTitle" class="title"></div>
+        <button id="modalClose" class="modal-close" aria-label="닫기">닫기</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalContent"></div>
+        <div id="modalTags" class="tags">
+          <!-- 태그 앞에 해시태그(#) 추가 -->
+          <span class="tag">#흑돼지</span>
+          <span class="tag">#제주</span>
+          <span class="tag">#로컬맛집</span>
+          <span class="tag">#생선구이</span>
+        </div>
+        <!-- 주변 교통 정보 출력 영역 추가 -->
+        <div id="modalTransit"></div>
+        <div class="map" id="modalMap"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 주변 맛집 팝업 -->
+  <div id="nearbyBackdrop" class="nearby-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="nearby-modal">
+      <div class="nearby-header">
+        <div id="nearbyTitle">내 주변 맛집</div>
+        <div class="nearby-meta">
+          <span id="nearbyLoc" aria-label="현재 위치">위치 확인 대기</span>
+          <button id="nearbyReload" type="button" class="nearby-reload" aria-label="위치 재검색">재검색</button>
+        </div>
+        <button id="nearbyClose" class="nearby-close" aria-label="닫기">닫기</button>
+      </div>
+      <div class="nearby-body">
+        <div id="nearbyStatus" class="pill">현재 위치 확인 중...</div>
+        <ul id="nearbyList" class="nearby-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 플로팅 AI 버튼 -->
+  <button id="aiFab" class="chat-fab" aria-controls="chatWidget" aria-expanded="false" title="상담 열기">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H9l-4 4v-4a3 3 0 0 1-1-3V5Z" stroke="currentColor" stroke-width="1.8" fill="currentColor" />
+    </svg>
+  </button>
+
+  <!-- 대화형 AI 위젯 -->
+  <div id="chatWidget" class="chat-widget" role="dialog" aria-modal="false" aria-hidden="true" aria-label="실시간 상담">
+    <div class="chat-header">
+      <span>실시간 상담</span>
+      <span id="chatStatus" class="pill" style="font-size:.75rem">연결 대기</span>
+      <button id="chatClose" class="chat-close" aria-label="닫기">X</button>
+    </div>
+    <div id="chatMessages" class="chat-messages" aria-live="polite">
+      <div class="msg bot">상담 연결을 준비 중입니다. 잠시만 기다려 주세요.</div>
+    </div>
+    <form id="chatForm" class="chat-input">
+      <input id="chatInput" type="text" placeholder="메시지를 입력하세요..." aria-label="채팅 입력" disabled />
+      <button id="chatSend" class="chat-send" type="submit" disabled>전송</button>
+    </form>
+  </div>
+
+  <!-- 설문조사 팝업 -->
+  <div id="surveyBackdrop" class="survey-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="survey-modal" role="document">
+      <div class="survey-head">
+        <span>사이트 만족도 평가</span>
+        <button type="button" class="survey-close" id="surveyClose" aria-label="닫기">X</button>
+      </div>
+      <form id="surveyForm" class="survey-body">
+        <div>
+          <label style="font-weight:600;display:block;margin-bottom:6px;">별점</label>
+          <div class="survey-stars" id="surveyStars" role="radiogroup" aria-label="별점 선택(1~5)">
+            <button type="button" data-val="1" aria-label="1점" aria-pressed="false">★</button>
+            <button type="button" data-val="2" aria-label="2점" aria-pressed="false">★</button>
+            <button type="button" data-val="3" aria-label="3점" aria-pressed="false">★</button>
+            <button type="button" data-val="4" aria-label="4점" aria-pressed="false">★</button>
+            <button type="button" data-val="5" aria-label="5점" aria-pressed="false">★</button>
+          </div>
+        </div>
+        <div>
+          <label for="surveyComment" style="font-weight:600;display:block;margin-bottom:6px;">코멘트 (선택)</label>
+          <textarea id="surveyComment" class="survey-comment" placeholder="사이트 이용 소감이나 개선 의견을 남겨주세요."></textarea>
+        </div>
+        <div class="survey-actions">
+          <div class="row">
+            <button type="submit" id="surveySubmit" class="btn btn-primary survey-submit">제출</button>
+            <button type="button" id="surveyHide7" class="survey-hide7">7일간 보지않기</button>
+          </div>
+        </div>
+      </form>
+      <div id="surveyThanks" class="survey-body" style="display:none;">
+        <div class="survey-toast">소중한 의견 감사합니다</div>
+        <button type="button" class="btn" id="surveyThanksClose" style="margin-top:8px;">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="container">
+    <div>© 2025 여행자를 위한 맛집 · 관광명소. 
+    </div>
+  </footer>
+  <script src="data.js" defer></script>
+  <script src="app.js" defer></script>
+  <script>
+    // DOM에 남아있는 "연령대 선호: 10대 23% · 20대 15% ..." 텍스트에서 최다 연령대 추출
+    function extractTopAgeFromDOM(card){
+      const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT, null);
+      let node, foundEl = null, text = "";
+      while ((node = walker.nextNode())) {
+        const t = node.nodeValue.trim();
+        if (!t) continue;
+        if (t.includes("연령대") || t.includes("선호")) { foundEl = node.parentElement; text = foundEl.textContent; break; }
+      }
+      if (!foundEl || !/(\d{2})대\s*\d+%/.test(text)) return { label:"", removeEl:null };
+      let top = { grp:"", val:-1 };
+      const re = /(\d{2})대\s*(\d+)%/g;
+      let m; 
+      while ((m = re.exec(text))) {
+        const val = parseInt(m[2],10);
+        if (val > top.val) top = { grp: `${m[1]}대`, val };
+      }
+      return { label: top.grp || "", removeEl: foundEl };
+    }
+
+    // 연령대 최다 선호 라벨 계산
+    function getTopAgeLabel(agePref){
+      if (!agePref) return "";
+      let topKey = null, topVal = -Infinity;
+      for (const [k, v] of Object.entries(agePref)){
+        const num = typeof v === "number" ? v : parseFloat(String(v).replace("%","")) || 0;
+        if (num > topVal){ topVal = num; topKey = k; }
+      }
+      if (!topKey) return "";
+      const map = {"10s":"10대","20s":"20대","30s":"30대","40s":"40대","50s":"50대"};
+      const n = parseInt(topKey,10);
+      return Number.isFinite(n) ? `${n}대` : (map[topKey] || "");
+    }
+
+    function upsertAgeBadge(card){
+      const anyIdEl = card.querySelector("[data-id]");
+      // 데이터 기반 우선
+      let label = "";
+      if (anyIdEl && window.PLACES) {
+        const id = Number(anyIdEl.dataset.id);
+        const place = (window.PLACES || []).find(p => p.id === id);
+        if (place) label = getTopAgeLabel(place.agePref);
+      }
+      // 데이터가 없으면 DOM 텍스트에서 파싱
+      if (!label) {
+        const fromDom = extractTopAgeFromDOM(card);
+        label = fromDom.label;
+        if (fromDom.removeEl) fromDom.removeEl.remove(); // 원 문구 제거
+      }
+
+      const target = card.querySelector(".thumb") || card;
+      const exists = target.querySelector(".age-badge");
+
+      if (!label) { if (exists) exists.remove(); return; }
+
+      if (exists) {
+        exists.textContent = `${label} 인기`;
+      } else {
+        const badge = document.createElement("span");
+        badge.className = "age-badge";
+        badge.textContent = `${label} 인기`;
+        target.appendChild(badge);
+      }
+    }
+
+    function applyBadges(){
+      const grid = document.getElementById("grid");
+      if (!grid) return;
+      grid.querySelectorAll(".card").forEach(upsertAgeBadge);
+    }
+
+    window.addEventListener("load", () => {
+      const grid = document.getElementById("grid");
+      if (!grid) return;
+      applyBadges();
+
+      const mo = new MutationObserver(muts => {
+        muts.forEach(m => {
+          m.addedNodes.forEach(n => {
+            if (n.nodeType === 1 && n.classList.contains("card")) upsertAgeBadge(n);
+          });
+        });
+      });
+      mo.observe(grid, { childList: true, subtree: false });
+    });
+
+    /* 주변 교통 데이터 매핑 (장소명 기반) */
+    const NEARBY_TRANSIT = {
+      "경복궁": [
+        { name: "경복궁역 (3호선)", type: "subway", distance: "도보 3분" },
+        { name: "광화문역 (5호선)", type: "subway", distance: "도보 8분" },
+        { name: "경복궁 버스정류장", type: "bus", distance: "도보 2분" }
+      ],
+      "성산일출봉": [
+        { name: "성산일출봉 입구 정류장", type: "bus", distance: "도보 4분" },
+        { name: "성산항 정류장", type: "bus", distance: "도보 9분" }
+      ],
+      "부산 야경 포인트": [
+        { name: "남포역 (1호선)", type: "subway", distance: "도보 7분" },
+        { name: "자갈치역 (1호선)", type: "subway", distance: "도보 10분" },
+        { name: "남포동 중앙버스정류장", type: "bus", distance: "도보 5분" }
+      ],
+      "서울 감성 카페 로지": [
+        { name: "홍대입구역 (2·경의중앙·공항철도)", type: "subway", distance: "도보 6분" },
+        { name: "서교동 버스정류장", type: "bus", distance: "도보 3분" }
+      ]
+      // 필요시 추가...
+    };
+
+    function renderTransit() {
+      const modalTitle = document.getElementById("modalTitle");
+      const box = document.getElementById("modalTransit");
+      if (!modalTitle || !box) return;
+      const placeName = modalTitle.textContent.trim();
+      const list = NEARBY_TRANSIT[placeName] || [];
+      if (!list.length) {
+        box.innerHTML = '<div class="transit"><h3>주변 교통</h3><div class="transit-empty">등록된 주변 역/정류장 정보가 없습니다.</div></div>';
+        return;
+      }
+      const html = `
+        <div class="transit">
+          <h3>주변 교통</h3>
+          <ul class="transit-list">
+            ${list.map(item => {
+              const icon = item.type === "subway" ? "🚇" : "🚌";
+              return `<li class="transit-item"><span class="icon">${icon}</span><span class="name">${item.name}</span><span class="distance">${item.distance}</span></li>`;
+            }).join("")}
+          </ul>
+        </div>
+      `;
+      box.innerHTML = html;
+    }
+
+    // 모달 표시 감지(aria-hidden 변경)
+    (function observeModal(){
+      const backdrop = document.getElementById("modalBackdrop");
+      if (!backdrop) return;
+      const applyState = () => {
+        const open = backdrop.getAttribute("aria-hidden") === "false";
+        document.body.classList.toggle("modal-open", open);
+        if (open) setTimeout(renderTransit, 0); // 기존 기능 유지
+      };
+      const obs = new MutationObserver(applyState);
+      obs.observe(backdrop, { attributes:true, attributeFilter:["aria-hidden"] });
+    })();
+
+    // 선택적으로 모달 타이틀 변경만 감지하여 재렌더
+    const modalTitleEl = document.getElementById("modalTitle");
+    if (modalTitleEl) {
+      const obsTitle = new MutationObserver(() => renderTransit());
+      obsTitle.observe(modalTitleEl, { childList:true });
+    }
+
+    // Kakao Places로 주변 맛집 검색 후 팝업 표시
+    (function initNearbyPopup(){
+      const btn = document.getElementById('btnMyLocation');
+      const backdrop = document.getElementById('nearbyBackdrop');
+      const closeBtn = document.getElementById('nearbyClose');
+      const statusEl = document.getElementById('nearbyStatus');
+      const listEl = document.getElementById('nearbyList');
+      const locEl = document.getElementById('nearbyLoc');
+      const reloadBtn = document.getElementById('nearbyReload');
+
+      // 역지오코딩: 위경도 -> "부산 남구" 형태
+      function reverseGeocode(lat, lon, onDone){
+        try{
+          if (!window.kakao || !kakao.maps || !kakao.maps.services) {
+            onDone(null);
+            return;
+          }
+          const geocoder = new kakao.maps.services.Geocoder();
+          geocoder.coord2RegionCode(lon, lat, (result, status) => {
+            if (status !== kakao.maps.services.Status.OK || !result?.length) {
+              onDone(null);
+              return;
+            }
+            // 행정동(H) 우선, 없으면 첫 번째 결과 사용
+            const pref = result.find(r => r.region_type === 'H') || result[0];
+            const sido = pref.region_1depth_name || "";
+            const sigungu = pref.region_2depth_name || "";
+            const text = [sido, sigungu].filter(Boolean).join(" ").trim();
+            onDone(text || null);
+          });
+        } catch {
+          onDone(null);
+        }
+      }
+
+      function openPopup(){
+        backdrop.classList.add('show');
+        backdrop.setAttribute('aria-hidden','false');
+      }
+      function closePopup(){
+        backdrop.classList.remove('show');
+        backdrop.setAttribute('aria-hidden','true');
+      }
+      if (closeBtn) closeBtn.addEventListener('click', closePopup);
+      if (backdrop) backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) closePopup(); });
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePopup(); });
+
+      // 의사 평점 생성 (장소명 기반 해시 => 3.5~5.0)
+      function pseudoRating(name){
+        let h = 0;
+        for (let i=0;i<name.length;i++){
+          h = (h * 31 + name.charCodeAt(i)) >>> 0;
+        }
+        const frac = (h % 1000) / 1000;            // 0~0.999
+        const rating = 3.5 + frac * 1.5;           // 3.5 ~ 5.0
+        return Math.round(rating * 10) / 10;       // 한 자리 소수
+      }
+      // 절반 별(½) 제거: 정수 개수의 별만 표시
+      function makeStars(r){
+        const n = Math.max(0, Math.min(5, Math.round(r))); // 0~5
+        return '★'.repeat(n) + '☆'.repeat(5 - n);
+      }
+
+      function renderPlaces(data){
+        listEl.innerHTML = "";
+        if (!data || !data.length){
+          statusEl.textContent = "주변 맛집 결과가 없습니다.";
+          return;
+        }
+        statusEl.textContent = `주변 맛집 ${data.length}곳`;
+        data.slice(0,10).forEach(place => {
+          const rating = pseudoRating(place.place_name);
+          const stars = makeStars(rating);
+          const li = document.createElement('li');
+            li.className = 'nearby-item';
+            li.innerHTML = `
+              <div class="name">${place.place_name}</div>
+              <div class="nearby-rating" aria-label="평점 ${rating}">
+                <span class="rating-value">${rating}</span>
+                <span class="stars" aria-hidden="true">${stars}</span>
+              </div>
+              <div class="addr">${place.road_address_name || place.address_name || ""}</div>
+              <div class="actions">
+                ${place.place_url ? `<a class="btn-link" href="${place.place_url}" target="_blank" rel="noopener">상세보기</a>`:""}
+                ${place.phone ? `<a class="btn-link" href="tel:${place.phone}">전화</a>`:""}
+              </div>
+            `;
+          listEl.appendChild(li);
+        });
+      }
+
+      function searchKakaoPlaces(lat, lon){
+        if (!window.kakao || !kakao.maps || !kakao.maps.services){
+          statusEl.textContent = "Kakao Maps가 로드되지 않았습니다.";
+          return;
+        }
+        statusEl.textContent = "주변 맛집 검색 중...";
+        const ps = new kakao.maps.services.Places();
+        ps.keywordSearch(
+          '맛집',
+          (data, status) => {
+            if (status === kakao.maps.services.Status.OK) {
+              renderPlaces(data);
+            } else {
+              statusEl.textContent = "검색 결과가 없거나 오류가 발생했습니다.";
+            }
+          },
+          { location: new kakao.maps.LatLng(lat, lon), radius: 2000 }
+        );
+      }
+
+      function getLocationAndSearch(){
+        if (!('geolocation' in navigator)){
+          alert('브라우저가 위치 서비스를 지원하지 않습니다.');
+          return;
+        }
+        if (locEl) locEl.textContent = '위치 확인 중...';
+        statusEl.textContent = "현재 위치를 가져오는 중...";
+        listEl.innerHTML = "";
+        openPopup();
+        navigator.geolocation.getCurrentPosition(
+          (pos)=>{
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            // 좌표 -> 행정구역명 표시
+            reverseGeocode(lat, lon, (text) => {
+              if (locEl) {
+                locEl.textContent = text || `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+              }
+            });
+            statusEl.textContent = "주변 맛집 검색 중...";
+            searchKakaoPlaces(lat, lon);
+          },
+          (err)=>{
+            statusEl.textContent = `위치 정보를 가져올 수 없습니다: ${err.message}`;
+            if (locEl) locEl.textContent = '오류';
+          },
+          { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
+        );
+      }
+
+      if (btn) btn.addEventListener('click', getLocationAndSearch);
+      if (reloadBtn) reloadBtn.addEventListener('click', getLocationAndSearch);
+    })();
+
+    /* AI 챗 위젯 */
+    (function initLiveSupport(){
+      const fab = document.getElementById('aiFab');
+      const widget = document.getElementById('chatWidget');
+      const closeBtn = document.getElementById('chatClose');
+      const form = document.getElementById('chatForm');
+      const input = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('chatSend');
+      const messages = document.getElementById('chatMessages');
+      const statusEl = document.getElementById('chatStatus');
+
+      // 설정: WebSocket 서버 주소를 실제 상담 서버로 교체하세요.
+      const WS_URL = 'ws://localhost:3000/support'; // 예: wss://your-domain.com/ws/support
+      let ws = null;
+      let reconnectTimer = null;
+      let opening = false;
+
+      function setStatus(text){
+        if (statusEl) statusEl.textContent = text;
+      }
+      function setEnabled(yes){
+        input.disabled = !yes;
+        sendBtn.disabled = !yes;
+      }
+      function appendMessage(who, text){
+        const row = document.createElement('div');
+        row.className = 'msg ' + (who === 'user' ? 'user' : 'bot'); // bot 클래스를 상담사 메시지로 재사용
+        row.textContent = text;
+        messages.appendChild(row);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function connect(){
+        if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+        if (opening) return;
+        opening = true;
+        try{
+          ws = new WebSocket(WS_URL);
+        }catch(e){
+          opening = false;
+          setStatus('연결 실패');
+          setEnabled(false);
+          scheduleReconnect();
+          return;
+        }
+
+        setStatus('연결 중...');
+        setEnabled(false);
+
+        ws.onopen = () => {
+          opening = false;
+          setStatus('연결됨');
+          setEnabled(true);
+          // 초기 핸드셰이크(선택)
+          const hello = {
+            type: 'hello',
+            city: (typeof state !== 'undefined' && state.city) ? state.city : '',
+            ua: navigator.userAgent,
+            role: 'user' // 추가: 사용자 역할 명시
+          };
+          try { ws.send(JSON.stringify(hello)); } catch {}
+        };
+
+        ws.onmessage = (ev) => {
+          // 서버는 {type:"message", text:"..."} 형태를 권장
+          try{
+            const data = JSON.parse(ev.data);
+            if (data && data.type === 'message' && typeof data.text === 'string'){
+              appendMessage('agent', data.text);
+              return;
+            }
+          }catch{}
+          // 텍스트일 경우 그대로 표시
+          if (typeof ev.data === 'string'){
+            appendMessage('agent', ev.data);
+          }
+        };
+
+        ws.onclose = () => {
+          opening = false;
+          setStatus('연결 끊김 · 재연결 시도 중');
+          setEnabled(false);
+          scheduleReconnect();
+        };
+
+        ws.onerror = () => {
+          setStatus('오류 · 재연결 시도 중');
+        };
+      }
+
+      function scheduleReconnect(){
+        if (reconnectTimer) return;
+        reconnectTimer = setTimeout(()=>{
+          reconnectTimer = null;
+          connect();
+        }, 2000);
+      }
+
+      function openChat(){
+        widget.classList.add('show');
+        widget.setAttribute('aria-hidden','false');
+        fab.setAttribute('aria-expanded','true');
+        connect();
+        setTimeout(()=> input?.focus(), 0);
+      }
+      function closeChat(){
+        widget.classList.remove('show');
+        widget.setAttribute('aria-hidden','true');
+        fab.setAttribute('aria-expanded','false');
+        // 연결은 유지(상담 지속). 필요 시 아래 주석 해제해 닫을 때 연결 끊기
+        // try { ws?.close(); } catch {}
+      }
+
+      fab?.addEventListener('click', ()=> widget.classList.contains('show') ? closeChat() : openChat());
+      closeBtn?.addEventListener('click', closeChat);
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && widget.classList.contains('show')) closeChat(); });
+
+      form?.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const q = (input.value || '').trim();
+        if (!q) return;
+        if (!ws || ws.readyState !== WebSocket.OPEN){
+          appendMessage('agent', '아직 상담 연결이 되지 않았습니다. 잠시 후 다시 시도해주세요.');
+          return;
+        }
+        appendMessage('user', q);
+        input.value = '';
+        try { ws.send(JSON.stringify({ type:'message', text:q })); } catch {
+          appendMessage('agent', '메시지 전송 중 오류가 발생했습니다.');
+        }
+      });
+    })();
+
+    // 로고 클릭/키보드로 새로고침
+    (function initLogoReload(){
+      const logo = document.getElementById('siteLogo') || document.querySelector('.brand .logo');
+      if (!logo) return;
+      const reload = () => location.reload();
+      logo.addEventListener('click', reload);
+      logo.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          reload();
+        }
+      });
+    })();
+
+    /* 상담 힌트 반복: 1) 5초 대기 2) "도움이 필요하신가요?" 5초 3) "버튼을 눌러보세요!" 5초 4) 15초 휴식 반복 */
+    (function initChatHint(){
+      const FAB_ID = 'aiFab';
+      const DELAY_BEFORE_FIRST = 5000;
+      const SHOW_DURATION = 5000;
+      const REST_DURATION = 15000;
+
+      let started = false;
+      let currentEl = null;
+      let timers = [];
+
+      function clearTimers(){
+        timers.forEach(t => clearTimeout(t));
+        timers = [];
+      }
+
+      function isChatOpen(){
+        return document.getElementById('chatWidget')?.classList.contains('show');
+      }
+
+      function stopAll(){
+        clearTimers();
+        if (currentEl?.isConnected) currentEl.remove();
+        currentEl = null;
+        started = false;
+      }
+
+      function positionHint(el){
+        const fab = document.getElementById(FAB_ID);
+        if (!fab || !el) return;
+        const gap = 10;
+        const fabRect = fab.getBoundingClientRect();
+        el.style.visibility = 'hidden';
+        el.style.top = '0px';
+        el.style.left = '0px';
+        const elRect = el.getBoundingClientRect();
+        let top = fabRect.top + (fabRect.height - elRect.height) / 2;
+        let left = fabRect.left - gap - elRect.width;
+        const minPad = 8;
+        top = Math.max(minPad, Math.min(top, window.innerHeight - elRect.height - minPad));
+        left = Math.max(minPad, Math.min(left, window.innerWidth - elRect.width - minPad));
+        el.style.top = `${top}px`;
+        el.style.left = `${left}px`;
+        el.style.visibility = 'visible';
+      }
+
+      function createBubble(text){
+        const el = document.createElement('div');
+        el.className = 'chat-hint';
+        el.setAttribute('role','status');
+        el.textContent = text;
+        document.body.appendChild(el);
+        positionHint(el);
+        const onResize = () => { if (el.isConnected) positionHint(el); };
+        window.addEventListener('resize', onResize, { passive:true });
+        const fab = document.getElementById(FAB_ID);
+        if (fab){
+          fab.addEventListener('click', () => {
+            if (el.isConnected) el.remove();
+            window.removeEventListener('resize', onResize);
+            stopAll();
+          }, { once:true });
+        }
+        return { el, onResize };
+      }
+
+      function removeBubble(ref){
+        if (!ref) return;
+        const { el, onResize } = ref;
+        if (el.isConnected){
+          el.classList.add('fade-out');
+          setTimeout(() => {
+            if (el.isConnected) el.remove();
+            window.removeEventListener('resize', onResize);
+          }, 500);
+        } else {
+          window.removeEventListener('resize', onResize);
+        }
+        if (currentEl === el) currentEl = null;
+      }
+
+      function cycle(){
+        if (!started || isChatOpen()) { stopAll(); return; }
+
+        // Step 1: 5초 대기 후 첫 문구
+        timers.push(setTimeout(() => {
+          if (isChatOpen()) { stopAll(); return; }
+          const first = createBubble('도움이 필요하신가요?');
+          currentEl = first.el;
+          // 첫 문구 5초 노출
+          timers.push(setTimeout(() => {
+            removeBubble(first);
+            if (isChatOpen()) { stopAll(); return; }
+            // 두번째 문구 즉시 표시
+            const second = createBubble('버튼을 눌러보세요!');
+            currentEl = second.el;
+            // 두번째 5초 노출
+            timers.push(setTimeout(() => {
+              removeBubble(second);
+              if (isChatOpen()) { stopAll(); return; }
+              // 15초 휴식 후 반복
+              timers.push(setTimeout(() => {
+                if (isChatOpen()) { stopAll(); return; }
+                cycle();
+              }, REST_DURATION));
+            }, SHOW_DURATION));
+          }, SHOW_DURATION));
+        }, DELAY_BEFORE_FIRST));
+      }
+
+      function start(){
+        if (started) return;
+        started = true;
+        cycle();
+      }
+
+      ['scroll','mousemove','keydown','touchstart'].forEach(ev =>
+        window.addEventListener(ev, start, { passive:true, once:true })
+      );
+    })();
+
+    /* === 설문조사 팝업 초기화 === */
+    (function initSiteSurvey(){
+      const DELAY_MS = 20000; // 20초로 변경
+      const LS_KEY_HIDE = 'surveyHideUntil';
+      const LS_KEY_SUBMITTED = 'surveySubmitted';
+      const backdrop = document.getElementById('surveyBackdrop');
+      const form = document.getElementById('surveyForm');
+      const closeBtn = document.getElementById('surveyClose');
+      const thanksView = document.getElementById('surveyThanks');
+      const thanksClose = document.getElementById('surveyThanksClose');
+      const starsWrap = document.getElementById('surveyStars');
+      const hide7Btn = document.getElementById('surveyHide7');
+      let currentRating = 0;
+      if (!backdrop) return;
+
+      function shouldSuppress(){
+        const hideUntil = parseInt(localStorage.getItem(LS_KEY_HIDE)||'0',10);
+        if (hideUntil && Date.now() < hideUntil) return true;
+        if (localStorage.getItem(LS_KEY_SUBMITTED)==='1') return true;
+        return false;
+      }
+
+      function open(){
+        backdrop.classList.add('show');
+        backdrop.setAttribute('aria-hidden','false');
+        // 포커스 첫 별
+        const firstStar = starsWrap?.querySelector('button');
+        firstStar && firstStar.focus();
+      }
+      function close(){
+        backdrop.classList.remove('show');
+        backdrop.setAttribute('aria-hidden','true');
+      }
+      function setRating(val){
+        currentRating = val;
+        starsWrap.querySelectorAll('button').forEach(btn=>{
+          const v = Number(btn.dataset.val);
+          btn.setAttribute('aria-pressed', v <= val ? 'true':'false');
+          btn.style.color = (v <= val) ? '#f3b41b' : '#ccc';
+        });
+      }
+
+      // 별 인터랙션
+      starsWrap?.addEventListener('click', e=>{
+        const btn = e.target.closest('button[data-val]');
+        if (!btn) return;
+        setRating(Number(btn.dataset.val));
+      });
+      starsWrap?.addEventListener('mouseover', e=>{
+        const btn = e.target.closest('button[data-val]');
+        if (!btn) return;
+        const hoverVal = Number(btn.dataset.val);
+        starsWrap.querySelectorAll('button').forEach(b=>{
+          const v = Number(b.dataset.val);
+          b.style.color = v <= hoverVal ? '#f3b41b':'#ccc';
+        });
+      });
+      starsWrap?.addEventListener('mouseleave', ()=>{
+        starsWrap.querySelectorAll('button').forEach(b=>{
+          const v = Number(b.dataset.val);
+          const selected = v <= currentRating;
+          b.style.color = selected ? '#f3b41b':'#ccc';
+        });
+      });
+
+      // 제출
+      form?.addEventListener('submit', e=>{
+        e.preventDefault();
+        if (currentRating === 0){
+          alert('별점을 선택해주세요.');
+          return;
+        }
+        const comment = (document.getElementById('surveyComment')?.value||'').trim();
+        // 여기서 서버로 전송 로직 추가 가능 (fetch 등)
+        localStorage.setItem(LS_KEY_SUBMITTED,'1');
+        form.style.display='none';
+        thanksView.style.display='flex';
+      });
+
+      // 7일 숨김
+      hide7Btn?.addEventListener('click', ()=>{
+        const sevenDays = 7*24*60*60*1000;
+        localStorage.setItem(LS_KEY_HIDE, String(Date.now()+sevenDays));
+        close();
+      });
+
+      // 닫기
+      closeBtn?.addEventListener('click', close);
+      thanksClose?.addEventListener('click', close);
+      backdrop.addEventListener('click', e=>{
+        if (e.target === backdrop) close();
+      });
+      document.addEventListener('keydown', e=>{
+        if (e.key === 'Escape' && backdrop.classList.contains('show')) close();
+      });
+
+      // 지연 표시
+      if (!shouldSuppress()){
+        setTimeout(()=>{
+          if (!shouldSuppress()) open();
+        }, DELAY_MS);
+      }
+    })();
+  </script>
+</body>
+</html>

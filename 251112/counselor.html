@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>상담사 콘솔</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<style>
+body{font-family:system-ui,Arial,sans-serif;margin:0;padding:0;display:grid;grid-template-columns:260px 1fr;height:100vh;background:var(--bg);}
+.sidebar{border-right:1px solid var(--border);padding:12px;display:flex;flex-direction:column;gap:12px;background:var(--card);}
+.user-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;overflow:auto;flex:1;}
+.user-item{border:1px solid var(--border);padding:6px 8px;border-radius:8px;cursor:pointer;font-size:.85rem;display:flex;flex-direction:column;gap:4px;background:var(--bg);}
+.user-item.active{outline:2px solid var(--primary,#2563eb);}
+.main{display:flex;flex-direction:column;}
+.header{border-bottom:1px solid var(--border);padding:10px 14px;font-weight:600;display:flex;justify-content:space-between;align-items:center;background:var(--card);}
+.log{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.msg{max-width:70%;padding:8px 10px;border-radius:10px;white-space:pre-wrap;font-size:.85rem;line-height:1.35;}
+.msg.user{align-self:flex-start;background:var(--card);}
+.msg.agent{align-self:flex-end;background:var(--primary,#2563eb);color:#fff;}
+.form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--border);}
+.form input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);}
+.form button{padding:8px 14px;border:1px solid var(--border);background:var(--primary,#2563eb);color:#fff;border-radius:8px;cursor:pointer;}
+.status{font-size:.7rem;padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:var(--bg);}
+.actions{display:flex;gap:6px;flex-wrap:wrap;}
+.small-btn{font-size:.65rem;padding:4px 6px;border:1px solid var(--border);background:var(--bg);cursor:pointer;border-radius:6px;}
+</style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <strong>접속 사용자</strong>
+      <span id="connCount" class="status">0명</span>
+    </div>
+    <ul id="userList" class="user-list" aria-label="사용자 목록"></ul>
+    <div class="actions">
+      <button id="btnRefresh" class="small-btn">새로고침</button>
+      <button id="btnAllMode" class="small-btn">전체Broadcast</button>
+      <button id="btnDisconnect" class="small-btn">선택 종료</button>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="header">
+      <div>상담사 콘솔</div>
+      <div id="wsStatus" class="status">연결 대기</div>
+    </div>
+    <div id="log" class="log" aria-live="polite"></div>
+    <form id="sendForm" class="form">
+      <input id="msgInput" type="text" placeholder="메시지 입력" autocomplete="off" disabled>
+      <button type="submit" disabled>전송</button>
+    </form>
+  </div>
+<script>
+const WS_URL = 'ws://localhost:3000/support';
+let ws=null;
+let currentTarget=null; // 선택된 사용자 id (세션 id)
+let allMode=false;
+const userListEl=document.getElementById('userList');
+const logEl=document.getElementById('log');
+const statusEl=document.getElementById('wsStatus');
+const countEl=document.getElementById('connCount');
+const form=document.getElementById('sendForm');
+const input=document.getElementById('msgInput');
+const btnRefresh=document.getElementById('btnRefresh');
+const btnAll=document.getElementById('btnAllMode');
+const btnDisconnect=document.getElementById('btnDisconnect');
+
+function setStatus(t){ statusEl.textContent=t; }
+function appendMsg(who,text){
+  const div=document.createElement('div');
+  div.className='msg '+(who==='agent'?'agent':'user');
+  div.textContent=text;
+  logEl.appendChild(div);
+  logEl.scrollTop=logEl.scrollHeight;
+}
+function renderUsers(list){
+  userListEl.innerHTML='';
+  list.forEach(u=>{
+    const li=document.createElement('li');
+    li.className='user-item'+(u.id===currentTarget?' active':'');
+    li.dataset.id=u.id;
+    li.innerHTML=`<div><strong>${u.id}</strong> <span style="color:var(--muted)">${u.city||''}</span></div>
+    <div style="font-size:.65rem;color:var(--muted)">${u.ua?.slice(0,50)||''}</div>`;
+    li.onclick=()=>{
+      currentTarget=u.id; allMode=false;
+      renderUsers(list);
+      btnAll.textContent='전체Broadcast';
+      input.disabled=false; form.querySelector('button').disabled=false;
+      appendMsg('agent', `[알림] 사용자 ${u.id} 선택됨.`);
+    };
+    userListEl.appendChild(li);
+  });
+  countEl.textContent=list.length+'명';
+  if(!currentTarget && list.length){ currentTarget=list[0].id; renderUsers(list); }
+}
+function requestUserList(){
+  try{ ws?.send(JSON.stringify({ type:'list' })); }catch{}
+}
+function connect(){
+  if(ws && ws.readyState<=1) return;
+  ws=new WebSocket(WS_URL);
+  setStatus('연결 중...');
+  ws.onopen=()=>{
+    setStatus('연결됨');
+    ws.send(JSON.stringify({ type:'hello', role:'agent', ua:navigator.userAgent }));
+    input.disabled=false; form.querySelector('button').disabled=false;
+    requestUserList();
+  };
+  ws.onmessage=(ev)=>{
+    let data;
+    try{ data=JSON.parse(ev.data); }catch{ data={ type:'message', text:ev.data }; }
+    if(data.type==='message'){
+      appendMsg(data.role==='agent'?'agent':'user', data.text);
+    } else if(data.type==='users'){
+      renderUsers(data.users||[]);
+    } else if(data.type==='system'){
+      appendMsg('agent', `[SYSTEM] ${data.text}`);
+      requestUserList();
+    }
+  };
+  ws.onclose=()=>{ setStatus('닫힘(재시도)'); input.disabled=true; form.querySelector('button').disabled=true;
+    setTimeout(connect,1500);
+  };
+  ws.onerror=()=>{ setStatus('오류'); };
+}
+btnRefresh.onclick=()=>requestUserList();
+btnAll.onclick=()=>{
+  allMode=!allMode;
+  btnAll.textContent= allMode? '개별모드로' : '전체Broadcast';
+  appendMsg('agent', allMode? '[알림] 전체 발송 모드' : '[알림] 선택 사용자 모드');
+};
+btnDisconnect.onclick=()=>{
+  if(!currentTarget) return;
+  try{ ws?.send(JSON.stringify({ type:'kick', targetId: currentTarget })); }catch{}
+  appendMsg('agent', `[알림] 사용자 ${currentTarget} 종료 요청`);
+};
+form.onsubmit=e=>{
+  e.preventDefault();
+  const text=(input.value||'').trim();
+  if(!text) return;
+  const payload={
+    type:'message',
+    text,
+    target: allMode? 'all' : currentTarget
+  };
+  try{ ws.send(JSON.stringify(payload)); }catch{}
+  appendMsg('agent', text);
+  input.value='';
+};
+connect();
+</script>
+</body>
+</html>

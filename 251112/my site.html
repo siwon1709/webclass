@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>여행자를 위한 맛집 · 관광명소</title>
+  <meta name="description" content="여행자를 위한 맛집과 관광명소 추천, 검색, 즐겨찾기 기능 제공" />
+  <style>
+    :root{
+      --bg:#ffffff;--text:#1b1b1b;--muted:#666;--primary:#0ea5e9;--accent:#ef4444;
+      --card:#f8fafc;--border:#e5e7eb;--shadow:0 6px 24px rgba(0,0,0,.08);
+      --tag:#e2e8f0;--tag-text:#0f172a;
+    }
+    [data-theme="dark"]{
+      --bg:#0b1020;--text:#e6eaf3;--muted:#96a0b5;--primary:#38bdf8;--accent:#fb7185;
+      --card:#11182f;--border:#1f2a44;--shadow:0 6px 24px rgba(0,0,0,.35);
+      --tag:#1f2937;--tag-text:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Ubuntu,sans-serif;
+    }
+    header{
+      position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border);
+      backdrop-filter:saturate(170%) blur(6px);
+    }
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .nav{
+      display:flex;gap:12px;align-items:center;justify-content:space-between
+    }
+    .brand{
+      display:flex;gap:10px;align-items:center;font-weight:700;letter-spacing:.3px
+    }
+    .brand .logo{
+      width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#34d399,#0ea5e9);
+      display:grid;place-items:center;color:#fff;font-size:.9rem;box-shadow:var(--shadow);
+    }
+    .tools{display:flex;gap:10px;align-items:center}
+    .btn{
+      padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);
+      color:var(--text);cursor:pointer;transition:.15s;display:flex;gap:8px;align-items:center
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{background:var(--primary);border-color:transparent;color:#fff}
+    .searchbar{
+      display:flex;gap:10px;margin-top:12px;flex-wrap:wrap
+    }
+    .input{
+      flex:1;min-width:220px;padding:12px 14px;border:1px solid var(--border);
+      border-radius:12px;background:var(--bg);color:var(--text)
+    }
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .chip{
+      padding:8px 12px;border-radius:999px;background:var(--tag);
+      color:var(--tag-text);border:1px solid var(--border);cursor:pointer;font-size:.92rem
+    }
+    .chip.active{outline:2px solid var(--primary);background:transparent}
+    .grid{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px
+    }
+    @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.grid{grid-template-columns:1fr}}
+    .card{
+      background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;
+      box-shadow:var(--shadow);display:flex;flex-direction:column
+    }
+    .thumb{
+      aspect-ratio:16/9;background:#11182f;position:relative;overflow:hidden
+    }
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .badge{
+      position:absolute;top:10px;left:10px;background:rgba(0,0,0,.55);color:#fff;padding:6px 10px;border-radius:999px;font-size:.85rem
+    }
+    .card-body{padding:14px}
+    .title{font-weight:700;margin:2px 0 6px}
+    .meta{color:var(--muted);font-size:.92rem;display:flex;gap:8px;flex-wrap:wrap}
+    .tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+    .tag{background:var(--tag);color:var(--tag-text);padding:6px 8px;border-radius:8px;font-size:.8rem;border:1px solid var(--border)}
+    .card-actions{display:flex;gap:8px;margin-top:12px}
+    .btn-like{color:var(--accent);background:transparent;border:1px dashed var(--border)}
+    .empty{
+      border:2px dashed var(--border);border-radius:14px;padding:24px;text-align:center;color:var(--muted);margin-top:16px
+    }
+    footer{
+      margin-top:24px;padding:24px;border-top:1px solid var(--border);color:var(--muted)
+    }
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:100}
+    .modal{max-width:760px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .modal-body{padding:16px}
+    .modal-close{background:transparent;border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text);cursor:pointer}
+    .map{
+      margin-top:10px;border-radius:12px;overflow:hidden;border:1px solid var(--border)
+    }
+    .pill{font-size:.86rem;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="nav">
+        <div class="brand">
+          <div class="logo">TR</div>
+          <div>여행자를 위한 맛집 · 관광명소</div>
+        </div>
+        <div class="tools">
+          <button id="toggleTheme" class="btn" aria-label="다크 모드 토글">다크 모드</button>
+          <button id="showFavorites" class="btn" aria-label="즐겨찾기 보기">즐겨찾기</button>
+          <a class="btn-primary btn" href="#submit" aria-label="장소 제안">장소 제안하기</a>
+        </div>
+      </div>
+      <div class="searchbar">
+        <input id="q" class="input" type="search" placeholder="도시, 장소명, 메뉴, 키워드 검색 (예: 부산, 회, 전망대)" aria-label="검색" />
+        <select id="city" class="input" aria-label="도시 선택">
+          <option value="">전체 도시</option>
+          <option>부산</option>
+          <option>서울</option>
+          <option>제주</option>
+        </select>
+        <select id="sort" class="input" aria-label="정렬">
+          <option value="popular">인기순</option>
+          <option value="rating">평점순</option>
+          <option value="recent">최신순</option>
+        </select>
+        <button id="clear" class="btn" aria-label="초기화">초기화</button>
+      </div>
+      <div class="chips" role="tablist" aria-label="카테고리">
+        <button class="chip active" data-filter="all" role="tab" aria-selected="true">전체</button>
+        <button class="chip" data-filter="food" role="tab">맛집</button>
+        <button class="chip" data-filter="sight" role="tab">관광명소</button>
+        <button class="chip" data-filter="cafe" role="tab">카페</button>
+        <button class="chip" data-filter="night" role="tab">야경/포인트</button>
+        <button class="chip" data-filter="budget" role="tab">가성비</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="results">
+      <div id="grid" class="grid" aria-live="polite"></div>
+      <div id="empty" class="empty" hidden>조건에 맞는 결과가 없습니다. 검색어나 필터를 변경해 보세요.</div>
+    </section>
+
+    <section id="submit" style="margin-top:28px">
+      <h2>장소 제안하기</h2>
+      <p class="pill">아래 양식을 통해 장소를 제안해보세요</p>
+      <form id="suggestForm" style="display:grid;gap:10px;grid-template-columns:repeat(2,1fr)">
+        <input class="input" name="name" placeholder="장소명" required />
+        <input class="input" name="city" placeholder="도시 (예: 부산)" required />
+        <input class="input" name="category" placeholder="카테고리 (맛집/관광명소/카페 등)" required />
+        <input class="input" name="address" placeholder="주소" />
+        <input class="input" name="price" placeholder="예상 가격대 (예: 15000~30000원)" />
+        <input class="input" name="tags" placeholder="태그 (쉼표로 구분)" />
+        <textarea class="input" name="desc" placeholder="설명" style="grid-column:1/-1" rows="4"></textarea>
+        <button class="btn btn-primary" type="submit" style="grid-column:1/-1">제출 </button>
+      </form>
+      <div id="suggestToast" class="pill" style="margin-top:8px"></div>
+    </section>
+  </main>
+
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <div id="modalTitle" class="title"></div>
+        <button id="modalClose" class="modal-close" aria-label="닫기">닫기</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalContent"></div>
+        <div id="modalTags" class="tags"></div>
+        <div class="map" id="modalMap"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="container">
+    <div>© 2025 여행자를 위한 맛집 · 관광명소. 모든 데이터는 사용자 기기에 저장되는 로컬 데모입니다.</div>
+  </footer>
+
+  <script>
+    // 데모 데이터 (이미지 URL은 자유로 교체)
+    const PLACES = [
+      {
+        id:"p1", type:"food", city:"부산",
+        name:"광안리 해변 횟집",
+        rating:4.7, reviews:1243, popular:98, recent:20251020,
+        address:"부산 수영구 광안해변로 219",
+        price:"평균 25,000~45,000원",
+        tags:["회","바다뷰","가성비","단체석"],
+        desc:"광안대교 야경을 보며 신선한 회를 즐길 수 있는 인기 맛집. 예약 필수 시간대 다수.",
+        img:"https://images.unsplash.com/photo-1555992336-03a23c394999?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.153, lng:129.118}
+      },
+      {
+        id:"p2", type:"sight", city:"부산",
+        name:"해운대 달맞이길 전망대",
+        rating:4.6, reviews:879, popular:90, recent:20251001,
+        address:"부산 해운대구 달맞이길",
+        price:"무료",
+        tags:["야경","포토스팟","드라이브"],
+        desc:"부산 야경 명소. 해운대·광안대교 라인이 한눈에 들어오는 포인트.",
+        img:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.159, lng:129.165}
+      },
+      {
+        id:"p3", type:"cafe", city:"부산",
+        name:"송정 오션뷰 카페",
+        rating:4.4, reviews:532, popular:82, recent:20250918,
+        address:"부산 해운대구 송정해변 인근",
+        price:"음료 6,000~8,500원",
+        tags:["오션뷰","디저트","서핑"],
+        desc:"통창으로 보이는 송정 바다와 디저트가 인기인 카페.",
+        img:"https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.178, lng:129.205}
+      },
+      {
+        id:"p4", type:"sight", city:"부산",
+        name:"감천문화마을",
+        rating:4.5, reviews:2210, popular:99, recent:20251003,
+        address:"부산 사하구 감내2로 203",
+        price:"일부 체험 유료",
+        tags:["컬러마을","포토","걷기","가족여행"],
+        desc:"알록달록한 마을과 골목 예술 작품으로 유명한 부산 대표 관광지.",
+        img:"https://images.unsplash.com/photo-1603519621610-3ccdebd05893?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.097, lng:129.010}
+      },
+      {
+        id:"p5", type:"night", city:"부산",
+        name:"이기대 해안 산책로",
+        rating:4.8, reviews:412, popular:87, recent:20251011,
+        address:"부산 남구 이기대",
+        price:"무료",
+        tags:["해안길","출사지","야경","바람"],
+        desc:"절벽과 파도 소리, 광안대교 라인이 어우러지는 해안 산책로.",
+        img:"https://images.unsplash.com/photo-1516426127435-2b598a895b08?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.108, lng:129.115}
+      },
+      {
+        id:"p6", type:"food", city:"부산",
+        name:"서면 가성비 돼지국밥",
+        rating:4.3, reviews:1630, popular:96, recent:20251005,
+        address:"부산 부산진구 서면로",
+        price:"6,500~8,500원",
+        tags:["국밥","가성비","혼밥"],
+        desc:"진한 육수와 푸짐한 고명, 빠른 회전율로 대기 부담 적음.",
+        img:"https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.157, lng:129.060}
+      },
+      {
+        id:"p7", type:"food", city:"부산",
+        name:"자갈치 시장 회포장",
+        rating:4.6, reviews:2150, popular:95, recent:20251015,
+        address:"부산 중구 자갈치해안로 52",
+        price:"30,000~60,000원",
+        signature:{ name:"특선 모둠회 (3인)", price:"55,000원" },
+        tags:["회","해산물","전통시장","현지인추천"],
+        desc:"부산 대표 수산시장. 직접 고른 해산물을 즉석에서 회로 떠주는 맛집.",
+        img:"https://images.unsplash.com/photo-1580554530778-0998e147f29c?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.097, lng:129.030}
+      },
+      {
+        id:"p8", type:"food", city:"부산",
+        name:"영도 할매국수",
+        rating:4.4, reviews:890, popular:88, recent:20251012,
+        address:"부산 영도구 태종로 45",
+        price:"7,000~10,000원",
+        signature:{ name:"멸치국수", price:"7,000원" },
+        tags:["국수","밀면","가성비","현지인맛집"],
+        desc:"30년 전통의 부산식 국수 전문점. 깊은 멸치육수가 특징.",
+        img:"https://images.unsplash.com/photo-1552611052-33e04de081de?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.091, lng:129.042}
+      },
+      {
+        id:"p9", type:"food", city:"부산",
+        name:"해운대 생선구이",
+        rating:4.5, reviews:1560, popular:92, recent:20251018,
+        address:"부산 해운대구 구남로 15",
+        price:"15,000~25,000원",
+        signature:{ name:"고등어구이 정식", price:"17,000원" },
+        tags:["생선구이","백반","해운대","가성비"],
+        desc:"신선한 생선으로 매일 아침 준비하는 정통 생선구이 전문점.",
+        img:"https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.158, lng:129.160}
+      },
+      {
+        id:"p10", type:"food", city:"서울",
+        name:"종로 평양냉면",
+        rating:4.8, reviews:3200, popular:97, recent:20251019,
+        address:"서울 종로구 관철동 16-8",
+        price:"12,000~18,000원",
+        signature:{ name:"물냉면", price:"13,000원" },
+        tags:["냉면","평양냉면","전통맛집","종로"],
+        desc:"60년 전통의 평양냉면 맛집. 육수와 면발이 일품인 정통 냉면집.",
+        img:"https://images.unsplash.com/photo-1503764654157-72d979d9af2f?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:37.569, lng:126.985}
+      },
+      {
+        id:"p11", type:"food", city:"서울",
+        name:"이태원 스테이크하우스",
+        rating:4.7, reviews:1850, popular:94, recent:20251017,
+        address:"서울 용산구 이태원로 156",
+        price:"45,000~80,000원",
+        signature:{ name:"토마호크 스테이크", price:"75,000원" },
+        tags:["스테이크","와인","데이트","고급"],
+        desc:"최상급 소고기를 사용하는 정통 스테이크하우스. 와인 페어링 추천.",
+        img:"https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:37.534, lng:126.994}
+      },
+      {
+        id:"p12", type:"food", city:"제주",
+        name:"제주 흑돼지구이",
+        rating:4.6, reviews:2800, popular:96, recent:20251016,
+        address:"제주시 노형동 123-4",
+        price:"30,000~50,000원",
+        signature:{ name:"흑돼지 모듬구이", price:"45,000원" },
+        tags:["흑돼지","제주도","로컬맛집","구이"],
+        desc:"제주 토종 흑돼지를 전문으로 하는 맛집. 특제 된장소스 제공.",
+        img:"https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:33.486, lng:126.485}
+      },
+      {
+        id:"p13", type:"food", city:"제주",
+        name:"서귀포 회식당",
+        rating:4.5, reviews:1600, popular:93, recent:20251015,
+        address:"서귀포시 중정로 76",
+        price:"35,000~60,000원",
+        signature:{ name:"제주 자리돔회", price:"40,000원" },
+        tags:["회","제주도","자리돔","현지인맛집"],
+        desc:"제주 특산물인 자리돔회가 유명한 현지 맛집. 계절 생선회도 준비.",
+        img:"https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:33.246, lng:126.564}
+      },
+      {
+        id:"p14", type:"food", city:"서울",
+        name:"광장시장 육회",
+        rating:4.4, reviews:2100, popular:91, recent:20251014,
+        address:"서울 종로구 창경궁로 88",
+        price:"15,000~25,000원",
+        signature:{ name:"육사시미", price:"20,000원" },
+        tags:["육회","전통시장","광장시장","실속"],
+        desc:"30년 전통의 육회 전문점. 신선한 한우만 사용하는 것으로 유명.",
+        img:"https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:37.570, lng:126.999}
+      },
+      {
+        id:"p15", type:"food", city:"부산",
+        name:"서면 양곱창",
+        rating:4.6, reviews:1750, popular:92, recent:20251013,
+        address:"부산 부산진구 서면로 123",
+        price:"25,000~40,000원",
+        signature:{ name:"모듬곱창", price:"35,000원" },
+        tags:["곱창","서면","야식","인기"],
+        desc:"특제 양념과 신선한 재료로 유명한 곱창구이 전문점.",
+        img:"https://images.unsplash.com/photo-1590301157890-4810ed352733?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.157, lng:129.058}
+      },
+      {
+        id:"p16", type:"food", city:"서울",
+        name:"홍대 타코맛집",
+        rating:4.5, reviews:980, popular:89, recent:20251012,
+        address:"서울 마포구 와우산로 123",
+        price:"12,000~20,000원",
+        signature:{ name:"쉬림프 타코 3개", price:"15,000원" },
+        tags:["멕시칸","타코","홍대","퓨전"],
+        desc:"멕시코 현지 레시피로 만드는 정통 타코와 퓨전 타코 전문점.",
+        img:"https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:37.556, lng:126.923}
+      },
+      {
+        id:"p17", type:"food", city:"제주",
+        name:"성산 해장국",
+        rating:4.3, reviews:1200, popular:88, recent:20251011,
+        address:"제주 서귀포시 성산읍 123",
+        price:"8,000~15,000원",
+        signature:{ name:"성게미역국", price:"10,000원" },
+        tags:["해장국","성게","아침","현지인"],
+        desc:"제주 토박이가 운영하는 성게미역국 전문점. 아침식사 강추.",
+        img:"https://images.unsplash.com/photo-1548943487-a2e4e43b4853?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:33.459, lng:126.917}
+      },
+      {
+        id:"p18", type:"food", city:"서울",
+        name:"강남 스시오마카세",
+        rating:4.9, reviews:560, popular:95, recent:20251010,
+        address:"서울 강남구 선릉로 234",
+        price:"150,000~250,000원",
+        signature:{ name:"런치 오마카세", price:"150,000원" },
+        tags:["스시","오마카세","고급","데이트"],
+        desc:"미쉐린 스타 출신 셰프의 프리미엄 스시 오마카세.",
+        img:"https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:37.504, lng:127.049}
+      },
+      {
+        id:"p19", type:"food", city:"부산",
+        name:"기장 물밀면",
+        rating:4.4, reviews:1450, popular:87, recent:20251009,
+        address:"부산 기장군 기장읍 456",
+        price:"8,000~12,000원",
+        signature:{ name:"물밀면", price:"8,000원" },
+        tags:["밀면","부산","로컬맛집","가성비"],
+        desc:"3대째 이어오는 부산 정통 물밀면 맛집. 시원한 육수가 특징.",
+        img:"https://images.unsplash.com/photo-1552611052-33e04de081de?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.244, lng:129.222}
+      },
+      {
+        id:"p20", type:"food", city:"서울",
+        name:"을지로 곱창골목",
+        rating:4.7, reviews:2800, popular:94, recent:20251008,
+        address:"서울 중구 을지로3가 234",
+        price:"25,000~40,000원",
+        signature:{ name:"소곱창모듬", price:"35,000원" },
+        tags:["곱창","을지로","인기","술안주"],
+        desc:"을지로 곱창골목의 터줏대감. 30년 전통의 곱창 맛집.",
+        img:"https://images.unsplash.com/photo-1590301157890-4810ed352733",
+        map:{lat:37.566, lng:126.991}
+      },
+      {
+        id:"p21", type:"food", city:"서울",
+        name:"북촌 한정식",
+        rating:4.8, reviews:1560, popular:93, recent:20251007,
+        address:"서울 종로구 북촌로 123",
+        price:"45,000~80,000원",
+        signature:{ name:"진지상차림", price:"60,000원" },
+        tags:["한정식","북촌","고급","전통"],
+        desc:"궁중요리를 재해석한 모던 한정식. 계절별 특선 메뉴 제공.",
+        img:"https://images.unsplash.com/photo-1498654896293-37aacf113fd9",
+        map:{lat:37.581, lng:126.984}
+      },
+      {
+        id:"p22", type:"food", city:"부산",
+        name:"초량 칼국수",
+        rating:4.5, reviews:1900, popular:91, recent:20251006,
+        address:"부산 동구 초량동 123",
+        price:"8,000~12,000원",
+        signature:{ name:"해물칼국수", price:"9,000원" },
+        tags:["칼국수","해물","가성비","현지맛집"],
+        desc:"30년 전통의 부산식 칼국수. 해물 듬뿍 들어간 시원한 국물이 특징.",
+        img:"https://images.unsplash.com/photo-1551504734-5ee1c4a1479b",
+        map:{lat:35.116, lng:129.042}
+      },
+      {
+        id:"p23", type:"food", city:"부산",
+        name:"부산 오뎅",
+        rating:4.3, reviews:800, popular:85, recent:20251005,
+        address:"부산 중구 광복로 123",
+        price:"3,000~5,000원",
+        tags:["오뎅","분식","가성비","간식"],
+        desc:"부산 명물 오뎅. 쫄깃한 식감과 진한 국물이 일품.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.102, lng:129.040}
+      },
+      {
+        id:"p24", type:"food", city:"부산",
+        name:"해운대 암소갈비",
+        rating:4.9, reviews:620, popular:98, recent:20251004,
+        address:"부산 해운대구 해운대해변로 123",
+        price:"50,000~90,000원",
+        signature:{ name:"암소갈비 구이", price:"70,000원" },
+        tags:["갈비","바베큐","해운대","고급"],
+        desc:"신선한 암소갈비만을 고집하는 프리미엄 갈비 전문점.",
+        img:"https://images.unsplash.com/photo-1603052879563-4f3e4a7f3f3b",
+        map:{lat:35.158, lng:129.161}
+      },
+      {
+        id:"p25", type:"food", city:"부산",
+        name:"동래 파전",
+        rating:4.4, reviews:450, popular:88, recent:20251002,
+        address:"부산 동래구 동래로 123",
+        price:"10,000~15,000원",
+        tags:["파전","전통주","안주","가성비"],
+        desc:"부산 동래의 명물, 바삭한 파전과 시원한 막걸리.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.232, lng:129.075}
+      },
+      {
+        id:"p26", type:"food", city:"부산",
+        name:"부산 밀면",
+        rating:4.6, reviews:780, popular:90, recent:20251001,
+        address:"부산 중구 자갈치해안로 123",
+        price:"7,000~10,000원",
+        tags:["밀면","부산","로컬맛집","가성비"],
+        desc:"부산의 여름 별미, 시원한 육수의 밀면.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.097, lng:129.030}
+      },
+      {
+        id:"p27", type:"food", city:"부산",
+        name:"해운대 생선회",
+        rating:4.8, reviews:920, popular:95, recent:20250930,
+        address:"부산 해운대구 해운대해변로 123",
+        price:"20,000~35,000원",
+        tags:["생선회","해산물","해운대","가성비"],
+        desc:"신선한 해산물로 만든 정통 생선회.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.158, lng:129.161}
+      },
+      {
+        id:"p28", type:"food", city:"부산",
+        name:"서면 돼지국밥",
+        rating:4.3, reviews:600, popular:86, recent:20250928,
+        address:"부산 부산진구 서면로 123",
+        price:"8,000~12,000원",
+        tags:["국밥","부산","가성비","혼밥"],
+        desc:"진한 육수의 돼지국밥, 푸짐한 고명이 매력.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.157, lng:129.058}
+      },
+      {
+        id:"p29", type:"food", city:"부산",
+        name:"자갈치 회센터",
+        rating:4.7, reviews:1100, popular:92, recent:20250925,
+        address:"부산 중구 자갈치해안로 123",
+        price:"25,000~50,000원",
+        tags:["회","해산물","전통시장","현지인추천"],
+        desc:"자갈치시장에서 신선한 회를 즉석에서 즐길 수 있는 곳.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.097, lng:129.030}
+      },
+      {
+        id:"p30", type:"food", city:"부산",
+        name:"부산 오리엔탈",
+        rating:4.5, reviews:450, popular:89, recent:20250920,
+        address:"부산 해운대구 해운대해변로 123",
+        price:"15,000~30,000원",
+        tags:["퓨전","해산물","고급","데이트"],
+        desc:"신선한 해산물과 퓨전 요리를 즐길 수 있는 고급 레스토랑.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.158, lng:129.161}
+      },
+      {
+        id:"p31", type:"food", city:"부산",
+        name:"동백섬 카페",
+        rating:4.6, reviews:520, popular:91, recent:20250918,
+        address:"부산 해운대구 동백로 123",
+        price:"8,000~15,000원",
+        tags:["카페","오션뷰","디저트","데이트"],
+        desc:"동백섬의 아름다운 경치를 감상하며 커피와 디저트를 즐길 수 있는 카페.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.158, lng:129.161}
+      },
+      {
+        id:"p32", type:"food", city:"부산",
+        name:"해운대 바다의 향기",
+        rating:4.7, reviews:680, popular:93, recent:20250915,
+        address:"부산 해운대구 해운대해변로 123",
+        price:"20,000~40,000원",
+        tags:["해산물","바다뷰","고급","데이트"],
+        desc:"해운대 바다를 바라보며 신선한 해산물 요리를 즐길 수 있는 레스토랑.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.158, lng:129.161}
+      },
+      {
+        id:"p33", type:"food", city:"부산",
+        name:"부산 차이나타운",
+        rating:4.4, reviews:400, popular:87, recent:20250910,
+        address:"부산 중구 차이나타운 123",
+        price:"10,000~20,000원",
+        tags:["중식","차이나타운","가성비","술안주"],
+        desc:"부산 차이나타운의 정통 중화요리 전문점.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.097, lng:129.030}
+      },
+      {
+        id:"p34", type:"food", city:"부산",
+        name:"해운대 스시",
+        rating:4.8, reviews:750, popular:95, recent:20250905,
+        address:"부산 해운대구 해운대해변로 123",
+        price:"30,000~50,000원",
+        tags:["스시","해산물","고급","데이트"],
+        desc:"신선한 해산물로 만든 정통 스시 전문점.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.158, lng:129.161}
+      },
+      {
+        id:"p35", type:"food", city:"부산",
+        name:"부산 왕갈비",
+        rating:4.6, reviews:800, popular:90, recent:20250901,
+        address:"부산 동래구 동래로 123",
+        price:"25,000~45,000원",
+        tags:["갈비","바베큐","가성비","단체석"],
+        desc:"부산 동래의 명물, 푸짐한 왕갈비와 정통 소스.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.232, lng:129.075}
+      },
+      {
+        id:"p36", type:"food", city:"부산",
+        name:"해운대 조개구이",
+        rating:4.7, reviews:900, popular:94, recent:20250828,
+        address:"부산 해운대구 해운대해변로 123",
+        price:"15,000~30,000원",
+        tags:["조개구이","해산물","가성비","술안주"],
+        desc:"신선한 조개로 만든 정통 조개구이 전문점.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.158, lng:129.161}
+      },
+      {
+        id:"p37", type:"food", city:"부산",
+        name:"부산 해물탕",
+        rating:4.5, reviews:650, popular:88, recent:20250825,
+        address:"부산 중구 자갈치해안로 123",
+        price:"10,000~20,000원",
+        tags:["해물탕","해산물","가성비","혼밥"],
+        desc:"신선한 해산물로 만든 얼큰한 해물탕.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:35.097, lng:129.030}
+      },
+      {
+        id:"p38", type:"food", city:"제주",
+        name:"제주 흑돼지",
+        rating:4.8, reviews:780, popular:96, recent:20250820,
+        address:"제주시 노형동 123-4",
+        price:"35,000~60,000원",
+        signature:{ name:"흑돼지 구이", price:"45,000원" },
+        tags:["흑돼지","제주도","로컬맛집","구이"],
+        desc:"제주 토종 흑돼지를 사용하는 정통 흑돼지 전문점.",
+        img:"https://images.unsplash.com/photo-1574158628540-4f3e4a7f3f3b",
+        map:{lat:33.486, lng:126.485}
+      },
+      {
+        id:"p39", type:"food", city:"제주",
+        name:"제주 고등어구이",
+        rating:4.6, reviews:890, popular:86, recent:20250919,
+        address:"제주시 연동 123-45",
+        price:"15,000~25,000원",
+        signature:{ name:"제주 고등어구이 정식", price:"18,000원" },
+        tags:["고등어구이","제주","로컬맛집","생선구이"],
+        desc:"제주 근해에서 잡은 고등어로만 요리하는 맛집.",
+        img:"https://images.unsplash.com/photo-1580476262798-bddd9f4b7369",
+        map:{lat:33.486, lng:126.485}
+      }
+    ];
+
+    // 상태
+    const state = {
+      query:"",
+      city:"",
+      sort:"popular",
+      filter:"all",
+      favorites: new Set(JSON.parse(localStorage.getItem("favorites")||"[]"))
+    };
+
+    // 유틸
+    const fmt = n => n.toLocaleString("ko-KR");
+    const score = p => ({
+      popular: -p.popular,
+      rating: -p.rating,
+      recent: -p.recent
+    });
+
+    // 렌더
+    const grid = document.getElementById("grid");
+    const empty = document.getElementById("empty");
+
+    function render(){
+      const q = state.query.trim().toLowerCase();
+      let list = PLACES.filter(p=>{
+        const passesFilter = state.filter==="all" || p.type===state.filter || (state.filter==="budget" && (p.price||"").match(/[0-9]/) && /6,?000|7,?000|8,?000|만원|저렴|가성비/.test(p.price));
+        const passesCity = !state.city || p.city===state.city;
+        const text = [p.name,p.address,p.price,(p.tags||[]).join(" "),p.city,p.desc].join(" ").toLowerCase();
+        const passesQuery = !q || text.includes(q);
+        return passesFilter && passesCity && passesQuery;
+      });
+
+      list.sort((a,b)=> score(a)[state.sort] - score(b)[state.sort]);
+
+      grid.innerHTML = "";
+      if(list.length===0){
+        empty.hidden = false;
+        return;
+      }
+      empty.hidden = true;
+
+      for(const p of list){
+        const el = document.createElement("article");
+        el.className="card";
+        el.innerHTML = `
+          <div class="thumb">
+            <img alt="${p.name}" src="${p.img}">
+            <span class="badge">★ ${p.rating.toFixed(1)} · 리뷰 ${fmt(p.reviews)}</span>
+          </div>
+          <div class="card-body">
+            <div class="title">${p.name}</div>
+            <div class="meta">
+              <span>${p.city}</span>
+              <span>·</span>
+              <span>${p.address||"주소 정보 없음"}</span>
+            </div>
+            <div class="tags">
+              ${(p.tags||[]).slice(0,4).map(t=>`<span class="tag">${t}</span>`).join("")}
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-primary" data-open="${p.id}">자세히 보기</button>
+              <button class="btn btn-like" data-fav="${p.id}">
+                ${state.favorites.has(p.id) ? "즐겨찾기 해제" : "즐겨찾기"}
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(el);
+      }
+    }
+
+    // 이벤트: 검색/필터/정렬
+    document.getElementById("q").addEventListener("input", e => { state.query = e.target.value; render(); });
+    document.getElementById("city").addEventListener("change", e => { state.city = e.target.value; render(); });
+    document.getElementById("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+    document.getElementById("clear").addEventListener("click", ()=>{
+      state.query=""; state.city=""; state.sort="popular"; state.filter="all";
+      document.getElementById("q").value="";
+      document.getElementById("city").value="";
+      document.getElementById("sort").value="popular";
+      document.querySelectorAll(".chip").forEach(ch=>ch.classList.toggle("active", ch.dataset.filter==="all"));
+      render();
+    });
+
+    // 카테고리 칩
+    document.querySelectorAll(".chip").forEach(chip=>{
+      chip.addEventListener("click", ()=>{
+        document.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));
+        chip.classList.add("active");
+        state.filter = chip.dataset.filter;
+        render();
+      });
+    });
+
+    // 델리게이션: 카드 버튼
+    grid.addEventListener("click", e=>{
+      const openId = e.target.closest("button")?.dataset?.open;
+      const favId = e.target.closest("button")?.dataset?.fav;
+      if(openId){ openModal(openId); }
+      if(favId){
+        if(state.favorites.has(favId)) state.favorites.delete(favId);
+        else state.favorites.add(favId);
+        localStorage.setItem("favorites", JSON.stringify([...state.favorites]));
+        render();
+      }
+    });
+
+    // 즐겨찾기 보기
+    document.getElementById("showFavorites").addEventListener("click", ()=>{
+      const ids = new Set(state.favorites);
+      const favs = PLACES.filter(p=>ids.has(p.id));
+      if(favs.length===0){
+        alert("즐겨찾기가 비어 있습니다. 마음에 드는 장소를 추가해 보세요!");
+        return;
+      }
+      // 임시: 현재 필터/검색 조건 무시하고 즐겨찾기만 표시
+      const prev = { ...state };
+      state.query=""; state.city=""; state.filter="all";
+      document.getElementById("q").value="";
+      document.getElementById("city").value="";
+      document.querySelectorAll(".chip").forEach(ch=>ch.classList.toggle("active", ch.dataset.filter==="all"));
+      // 커스텀 렌더
+      grid.innerHTML="";
+      empty.hidden = true;
+      favs.forEach(p=>{
+        const el = document.createElement("article");
+        el.className="card";
+        el.innerHTML = `
+          <div class="thumb">
+            <img alt="${p.name}" src="${p.img}">
+            <span class="badge">★ ${p.rating.toFixed(1)} · 리뷰 ${fmt(p.reviews)}</span>
+          </div>
+          <div class="card-body">
+            <div class="title">${p.name} <span class="pill">· 즐겨찾기</span></div>
+            <div class="meta"><span>${p.city}</span><span>·</span><span>${p.address||"주소 정보 없음"}</span></div>
+            <div class="tags">${(p.tags||[]).slice(0,4).map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+            <div class="card-actions">
+              <button class="btn btn-primary" data-open="${p.id}">자세히 보기</button>
+              <button class="btn btn-like" data-fav="${p.id}">즐겨찾기 해제</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(el);
+      });
+    });
+
+    // 모달
+    const backdrop = document.getElementById("modalBackdrop");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalContent = document.getElementById("modalContent");
+    const modalTags = document.getElementById("modalTags");
+    const modalMap = document.getElementById("modalMap");
+    function openModal(id){
+      const p = PLACES.find(x=>x.id===id);
+      if(!p) return;
+      modalTitle.textContent = p.name;
+      modalContent.innerHTML = `
+        <div style="display:grid;gap:12px;grid-template-columns:180px 1fr;align-items:start">
+          <img src="${p.img}" alt="${p.name}" style="width:100%;height:120px;object-fit:cover;border-radius:12px;border:1px solid var(--border)">
+          <div>
+            <div class="pill">도시: ${p.city} · 카테고리: ${label(p.type)}</div>
+            <div class="pill">평점: ★ ${p.rating.toFixed(1)} (리뷰 ${fmt(p.reviews)})</div>
+            <div class="pill">주소: ${p.address||"정보 없음"}</div>
+            <div class="pill">가격대: ${p.price||"정보 없음"}</div>
+            <p style="margin-top:8px">${p.desc||""}</p>
+          </div>
+        </div>
+      `;
+      modalTags.innerHTML = (p.tags||[]).map(t=>`<span class="tag">${t}</span>`).join("");
+      // 간단 지도 임베드 (OpenStreetMap static iframe 대체: 구글맵 쿼리 사용 가능)
+      modalMap.innerHTML = `
+        <iframe title="지도" width="100%" height="300" style="border:0" loading="lazy"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=${p.map.lng-0.01}%2C${p.map.lat-0.01}%2C${p.map.lng+0.01}%2C${p.map.lat+0.01}&layer=mapnik&marker=${p.map.lat}%2C${p.map.lng}">
+        </iframe>
+      `;
+      backdrop.style.display="flex";
+      backdrop.setAttribute("aria-hidden","false");
+    }
+    document.getElementById("modalClose").addEventListener("click", closeModal);
+    backdrop.addEventListener("click", e=>{ if(e.target===backdrop) closeModal(); });
+    document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+    function closeModal(){
+      backdrop.style.display="none";
+      backdrop.setAttribute("aria-hidden","true");
+    }
+    function label(type){
+      return ({food:"맛집", sight:"관광명소", cafe:"카페", night:"야경/포인트"}[type]) || type;
+    }
+
+    // 다크 모드
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem("theme");
+    if(savedTheme) root.setAttribute("data-theme", savedTheme);
+    document.getElementById("toggleTheme").addEventListener("click", ()=>{
+      const next = root.getAttribute("data-theme")==="dark" ? "" : "dark";
+      if(next) root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme");
+      localStorage.setItem("theme", next);
+    });
+
+    // 제안 폼 (데모)
+    document.getElementById("suggestForm").addEventListener("submit", e=>{
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const id = "user_"+Date.now();
+      PLACES.push({
+        id, type:(data.category||"").trim()==="야경/포인트"?"night":(data.category||"").trim(),
+        city:(data.city||"").trim(), name:(data.name||"").trim(),
+        rating:4.0, reviews:1, popular:50, recent:+new Date().toISOString().slice(0,10).replaceAll("-",""),
+        address:data.address||"", price:data.price||"",
+        tags:(data.tags||"").split(",").map(s=>s.trim()).filter(Boolean),
+        desc:data.desc||"",
+        img:"https://images.unsplash.com/photo-1521335629791-ce4aec67dd53?q=80&w=1200&auto=format&fit=crop",
+        map:{lat:35.1796,lng:129.0756}
+      });
+      document.getElementById("suggestToast").textContent = "제안이 로컬에 추가되었습니다. 목록에서 검색해 확인하세요.";
+      e.target.reset();
+      render();
+      setTimeout(()=> document.getElementById("suggestToast").textContent="", 3500);
+    });
+
+    // 초기 렌더
+    render();
+  </script>
+</body>
+</html>
