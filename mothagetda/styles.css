@@ -289,8 +289,9 @@ input[type="text"], input[type="password"], input[type="email"] { width: 100%; p
 .status { min-height: 20px; font-size: 13px; color: var(--muted); margin-top: 8px; }
 
 .result-box { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: #0f1320; padding: 12px; border-radius: 10px; border: 1px solid var(--border); }
-.result-line { font-size: 14px; }
-.label { color: var(--muted); margin-right: 6px; }
+.result-line { font-size: 14px; font-weight: 700; }
+.label { color: var(--muted); margin-right: 6px; font-weight: 700; }
+.result-line span:not(.label) { font-weight: 700; font-size: 15px; }
 
 .embed { margin-top: 10px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #0b0d12; min-height: 180px; display: grid; place-items: center; }
 .embed.placeholder { min-height: 220px; }
