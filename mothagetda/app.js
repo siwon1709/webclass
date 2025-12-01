@@ -6,9 +6,6 @@
   const $ = (sel) => document.querySelector(sel);
 
   // Elements
-  const spotifyLoginBtn = $('#spotify-login');
-  const spotifyLogoutBtn = $('#spotify-logout');
-
   const logoutBtn = document.getElementById('logout-btn');
   const profileBtn = document.getElementById('profile-btn');
   const notificationsBtn = document.getElementById('notifications-btn');
@@ -30,8 +27,6 @@
   const confidenceText = $('#confidence-text');
 
   const embed = $('#embed');
-  const playOnSpotify = $('#play-on-spotify');
-  const likeBtn = null;
   const skipBtn = $('#skip');
   const resetLearningBtn = $('#reset-learning');
 
@@ -75,13 +70,12 @@
   const profileLikedList = document.getElementById('profile-liked-list');
 
   // State
-  let accessToken = null; // Spotify implicit flow token
   let currentPlaylistId = null;
   let currentMood = null;
-  let currentUser = null; // User session info
-  let notifications = []; // User notifications
-  let playedTracks = []; // History of played tracks
-  let likedTracks = []; // Liked tracks
+  let currentUser = null;
+  let notifications = [];
+  let playedTracks = [];
+  let likedTracks = [];
 
   // Moods mapping to Spotify playlist IDs (public, region-dependent)
   const moodPlaylists = {
@@ -131,20 +125,6 @@
 
   function loadSettings() {
     try {
-      // parse hash for access token (implicit grant)
-      const hash = new URLSearchParams(window.location.hash.replace('#', ''));
-      const token = hash.get('access_token');
-      if (token) {
-        accessToken = token;
-        localStorage.setItem('spotify.accessToken', token);
-        // cleanup URL hash
-        history.replaceState({}, document.title, window.location.pathname + window.location.search);
-      } else {
-        const saved = localStorage.getItem('spotify.accessToken');
-        if (saved) accessToken = saved;
-      }
-      updateSpotifyButtons();
-      
       // Load user session
       const savedUser = localStorage.getItem('demo.user');
       if (savedUser) {
@@ -168,16 +148,6 @@
       if (savedLiked) likedTracks = JSON.parse(savedLiked);
     } catch (e) {
       console.warn('Failed to load settings:', e);
-    }
-  }
-
-  function updateSpotifyButtons() {
-    if (accessToken) {
-      spotifyLoginBtn.disabled = true;
-      spotifyLogoutBtn.disabled = false;
-    } else {
-      spotifyLoginBtn.disabled = false;
-      spotifyLogoutBtn.disabled = true;
     }
   }
 
@@ -546,41 +516,6 @@
     }
   }
 
-  async function onPlayOnSpotify() {
-    if (!accessToken) {
-      alert('Spotify 로그인이 필요합니다. 설정에서 로그인해 주세요.');
-      return;
-    }
-    if (!currentPlaylistId) {
-      alert('먼저 감정을 분석하여 플레이리스트를 선택해 주세요.');
-      return;
-    }
-    // Try to start playback on user's active device.
-    try {
-      const resp = await fetch('https://api.spotify.com/v1/me/player/play', {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context_uri: `spotify:playlist:${currentPlaylistId}` })
-      });
-      if (resp.status === 202 || resp.status === 204) {
-        setStatus('Spotify에서 재생을 시작했습니다. 활성 기기를 확인해 주세요.');
-      } else if (resp.status === 404) {
-        setStatus('활성화된 Spotify 기기를 찾을 수 없습니다. 앱에서 기기를 먼저 실행해 주세요.');
-      } else if (resp.status === 401) {
-        setStatus('토큰이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.');
-        spotifyLogout();
-      } else {
-        const text = await resp.text();
-        setStatus(`재생 실패 (${resp.status}): ${text}`);
-      }
-    } catch (e) {
-      console.error(e);
-      setStatus(`Spotify 재생 시도 중 오류: ${e.message}`);
-    }
-  }
-
-
-
   // Event listeners
   imageInput.addEventListener('change', () => {
     const file = imageInput.files && imageInput.files[0];
@@ -594,10 +529,6 @@
     setEmbedByMood(result.mood);
     setStatus('데모 무드 적용됨');
   });
-  spotifyLoginBtn.addEventListener('click', spotifyLogin);
-  spotifyLogoutBtn.addEventListener('click', spotifyLogout);
-  playOnSpotify.addEventListener('click', onPlayOnSpotify);
-  // 좋아요 버튼 기능 제거됨
   skipBtn && skipBtn.addEventListener('click', () => { if (currentMood) { record('skip', currentPlaylistId); setEmbedByMood(currentMood); setStatus('다른 추천을 표시했습니다.'); } });
   resetLearningBtn && resetLearningBtn.addEventListener('click', () => { localStorage.removeItem('prefs'); setStatus('학습 데이터가 초기화되었습니다.'); });
 
