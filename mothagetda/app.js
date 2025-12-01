@@ -13,6 +13,7 @@
   const notifDropdown = document.getElementById('notifications-dropdown');
   const notifList = document.getElementById('notif-list');
   const clearNotifsBtn = document.getElementById('clear-notifs');
+  const toastContainer = document.getElementById('toast-container');
 
   const imageInput = $('#image-input');
   const preview = $('#preview');
@@ -166,10 +167,43 @@
     }
   }
 
+  function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    
+    const icons = { like: '❤️', analysis: '🎭', info: 'ℹ️' };
+    const icon = icons[type] || 'ℹ️';
+    
+    toast.innerHTML = `
+      <div class="toast-icon">${icon}</div>
+      <div class="toast-content">
+        <div class="toast-message">${message}</div>
+      </div>
+      <button class="toast-close" aria-label="닫기">✕</button>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    const closeBtn = toast.querySelector('.toast-close');
+    const removeToast = () => {
+      toast.classList.add('hiding');
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 300);
+    };
+    
+    closeBtn.addEventListener('click', removeToast);
+    
+    // 5초 후 자동 제거
+    setTimeout(removeToast, 5000);
+  }
+
   function addNotification(type, message) {
     const notif = {
       id: Date.now(),
-      type, // 'like', 'analysis', 'info'
+      type,
       message,
       time: new Date().toISOString(),
       unread: true
@@ -178,6 +212,9 @@
     localStorage.setItem('notifications', JSON.stringify(notifications));
     updateNotificationBadge();
     renderNotifications();
+    
+    // 토스트 메시지 표시
+    showToast(type, message);
   }
 
   function updateNotificationBadge() {
