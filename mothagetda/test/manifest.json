@@ -2,83 +2,20 @@
   "name": "AI Mood Player - 감정 기반 음악 추천",
   "short_name": "Mood Player",
   "description": "얼굴 표정 감정 분석으로 맞춤 음악을 재생하는 AI Mood Player",
-  "start_url": "./index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0a1f",
   "theme_color": "#7c3aed",
   "orientation": "portrait-primary",
-  "scope": "./",
+  "scope": "/",
   "icons": [
     {
-      "src": "./icons/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "./icons/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/icon-512x512.png",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%237c3aed' width='100' height='100'/><text y='75' font-size='70' text-anchor='middle' x='50'>🎵</text></svg>",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
   "categories": ["music", "entertainment", "lifestyle"],
-  "screenshots": [
-    {
-      "src": "./screenshots/screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png"
-    }
-  ],
-  "prefer_related_applications": false,
-  "shortcuts": [
-    {
-      "name": "사진 업로드",
-      "short_name": "업로드",
-      "description": "사진을 업로드하여 감정 분석",
-      "url": "./index.html#upload",
-      "icons": [
-        {
-          "src": "./icons/icon-192x192.png",
-          "sizes": "192x192"
-        }
-      ]
-    }
-  ]
+  "prefer_related_applications": false
 }
