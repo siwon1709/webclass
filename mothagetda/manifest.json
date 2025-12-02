@@ -1,0 +1,21 @@
+{
+  "name": "AI Mood Player - 감정 기반 음악 추천",
+  "short_name": "Mood Player",
+  "description": "얼굴 표정 감정 분석으로 맞춤 음악을 재생하는 AI Mood Player",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0a1f",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%237c3aed' width='100' height='100'/><text y='75' font-size='70' text-anchor='middle' x='50'>🎵</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment", "lifestyle"],
+  "prefer_related_applications": false
+}

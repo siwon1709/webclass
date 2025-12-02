@@ -54,15 +54,13 @@
   const suPass2 = document.getElementById('su-pass2');
   const signupSubmit = document.getElementById('signup-submit');
   const gotoLogin = document.getElementById('goto-login');
-  
-  // Password strength elements
-  const passwordStrengthContainer = document.getElementById('password-strength');
-  const strengthText = document.getElementById('strength-text');
-  const strengthFill = document.getElementById('strength-fill');
-  const reqLength = document.getElementById('req-length');
-  const reqUppercase = document.getElementById('req-uppercase');
-  const reqNumber = document.getElementById('req-number');
-  const reqSpecial = document.getElementById('req-special');
+  const consentAll = document.getElementById('consent-all');
+  const consentTos = document.getElementById('consent-tos');
+  const consentPrivacy = document.getElementById('consent-privacy');
+  const consentMarketing = document.getElementById('consent-marketing');
+  const termsModal = document.getElementById('terms-modal');
+  const termsClose = document.getElementById('terms-close');
+  const termsBody = document.getElementById('terms-body');
 
   // Profile modal elements
   const profileModal = document.getElementById('profile-modal');
@@ -1194,91 +1192,40 @@
     });
   }
 
-  // Password strength checker
-  if (suPass) {
-    suPass.addEventListener('input', () => {
-      updatePasswordStrength();
-      refreshSignupButton();
-    });
-  }
+  // PWA Install Prompt
+  let deferredPrompt;
+  const installBtn = document.createElement('button');
+  installBtn.className = 'btn btn-primary-glow';
+  installBtn.textContent = '📱 앱 설치';
+  installBtn.style.display = 'none';
+  installBtn.style.position = 'fixed';
+  installBtn.style.bottom = '30px';
+  installBtn.style.left = '24px';
+  installBtn.style.zIndex = '40';
+  document.body.appendChild(installBtn);
 
-  function checkPasswordStrength(password) {
-    if (!password) {
-      return { strength: 'none', score: 0, requirements: {} };
-    }
-    
-    const requirements = {
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      number: /[0-9]/.test(password),
-      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
-    };
-    
-    let score = 0;
-    if (requirements.length) score++;
-    if (requirements.uppercase) score++;
-    if (requirements.lowercase) score++;
-    if (requirements.number) score++;
-    if (requirements.special) score++;
-    
-    let strength = 'weak';
-    if (score >= 5) strength = 'strong';
-    else if (score >= 4) strength = 'good';
-    else if (score >= 3) strength = 'fair';
-    
-    return { strength, score, requirements };
-  }
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+  });
 
-  function updatePasswordStrength() {
-    const password = suPass ? suPass.value : '';
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
     
-    if (!password) {
-      if (passwordStrengthContainer) {
-        passwordStrengthContainer.style.display = 'none';
-      }
-      return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      showToast('info', '앱이 설치되었습니다!');
     }
     
-    if (passwordStrengthContainer) {
-      passwordStrengthContainer.style.display = 'block';
-    }
-    
-    const { strength, score, requirements } = checkPasswordStrength(password);
-    
-    // Update strength text
-    const strengthLabels = {
-      weak: '약함',
-      fair: '보통',
-      good: '좋음',
-      strong: '강함'
-    };
-    
-    if (strengthText) {
-      strengthText.textContent = strengthLabels[strength] || '-';
-      strengthText.className = 'password-strength-text ' + strength;
-    }
-    
-    // Update strength bar
-    if (strengthFill) {
-      strengthFill.className = 'password-strength-fill ' + strength;
-    }
-    
-    // Update requirements
-    const updateRequirement = (element, met) => {
-      if (!element) return;
-      element.className = met ? 'password-requirement met' : 'password-requirement unmet';
-      const icon = element.querySelector('.password-requirement-icon');
-      if (icon) {
-        icon.textContent = met ? '✓' : '○';
-      }
-    };
-    
-    updateRequirement(reqLength, requirements.length);
-    updateRequirement(reqUppercase, requirements.uppercase);
-    updateRequirement(reqNumber, requirements.number);
-    updateRequirement(reqSpecial, requirements.special);
-  }
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
 
-  // ...existing code...
+  window.addEventListener('appinstalled', () => {
+    showToast('info', 'AI Mood Player가 설치되었습니다!');
+    installBtn.style.display = 'none';
+  });
 })();

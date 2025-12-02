@@ -4,6 +4,25 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>AI Mood Player</title>
+		
+		<!-- PWA Meta Tags -->
+		<meta name="description" content="얼굴 표정 감정 분석으로 맞춤 음악을 재생하는 AI Mood Player" />
+		<meta name="theme-color" content="#7c3aed" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Mood Player" />
+		
+		<!-- Manifest -->
+		<link rel="manifest" href="./manifest.json" />
+		
+		<!-- Apple Touch Icons -->
+		<link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152x152.png" />
+		<link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192x192.png" />
+		
+		<!-- Favicon -->
+		<link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-72x72.png" />
+		
 		<link rel="stylesheet" href="./styles.css" />
 		<meta name="description" content="얼굴 표정 감정 분석으로 맞춤 음악을 재생하는 AI Mood Player" />
 	</head>
@@ -21,18 +40,42 @@
 					<div class="title">AI Mood Player</div>
 					<div class="caption">당신의 감정을 음악으로</div>
 				</div>
-				<nav class="menu">
+				<nav class="menu desktop-menu">
 					<a href="#features">기능</a>
 					<a href="#how">작동 방식</a>
-				</nav>
+				</nav>	
 			</div>
 			<div class="nav-right">
-				<button id="notifications-btn" class="btn btn-ghost icon-only" title="알림">🔔<span id="notif-badge" class="badge hidden">0</span></button>
+				<button id="notifications-btn" class="btn btn-ghost icon-only" title="알림">
+					🔔<span id="notif-badge" class="badge hidden">0</span>
+				</button>
 				<button id="auth-open" class="btn btn-primary-glow">로그인/회원가입</button>
 				<button id="profile-btn" class="btn btn-ghost hidden">👤 프로필</button>
 				<button id="logout-btn" class="btn btn-tertiary hidden">로그아웃</button>
+				<button id="mobile-menu-btn" class="btn btn-ghost icon-only mobile-menu-btn">☰</button>
 			</div>
 		</header>
+
+		<!-- Mobile Menu Overlay -->
+		<div id="mobile-menu" class="mobile-menu hidden">
+			<div class="mobile-menu-header">
+				<div class="brand">
+					<div class="logo">🎵</div>
+					<div class="title">AI Mood Player</div>
+				</div>
+				<button id="mobile-menu-close" class="icon-btn">✕</button>
+			</div>
+			<nav class="mobile-menu-nav">
+				<a href="#features" class="mobile-menu-item">🎯 기능</a>
+				<a href="#how" class="mobile-menu-item">❓ 작동 방식</a>
+				<a href="#" class="mobile-menu-item" id="mobile-community">💬 커뮤니티</a>
+			</nav>
+			<div class="mobile-menu-actions">
+				<button id="mobile-auth" class="btn btn-primary-glow mobile-menu-btn">로그인/회원가입</button>
+				<button id="mobile-profile" class="btn btn-ghost mobile-menu-btn hidden">👤 프로필</button>
+				<button id="mobile-logout" class="btn btn-tertiary mobile-menu-btn hidden">로그아웃</button>
+			</div>
+		</div>
 
 		<!-- Hero -->
 		<section class="hero">
@@ -66,7 +109,7 @@
 				<!-- Left: Analysis Panel with tabs -->
 				<section class="card panel">
 					<div class="panel-header">
-						<div class="segmented">
+						<div class="segmented mobile-segmented">
 							<button id="tab-upload" class="seg active">사진 업로드</button>
 						</div>
 					</div>
@@ -82,7 +125,7 @@
 						<div id="preview" class="preview hidden">
 							<img id="preview-img" alt="미리보기" />
 						</div>
-						<div class="row">
+						<div class="row mobile-row">
 							<button id="analyze-btn" class="btn primary">분석하기</button>
 							<button id="demo-btn" class="btn">테스트 모드</button>
 						</div>
@@ -119,7 +162,7 @@
 							<div class="ph-desc">사진을 업로드하시면 당신의 감정에 맞는 <br>플레이리스트를 추천해드립니다.</div>
 						</div>
 					</div>
-					<div class="row">
+					<div class="row mobile-row">
 						<button id="like-btn" class="btn btn-like">❤️ 좋아요</button>
 						<button id="share-btn" class="btn btn-ghost">🔗 공유하기</button>
 						<button id="skip" class="btn">다른 추천 보기</button>
@@ -413,7 +456,7 @@
 						<li>평균 85-90%의 정확도로 7가지 주요 감정을 인식합니다</li>
 						<li>조명, 각도, 표정의 명확도에 따라 결과가 달라질 수 있습니다</li>
 					</ul>
-				</div>
+				</div>	
 				
 				<div class="info-section">
 					<div class="info-section-title">개인정보 보호</div>
@@ -442,5 +485,84 @@
 		<script src="./config.js"></script>
 		<script src="./particles.js"></script>
 		<script src="./app.js"></script>
+		<script src="./mobile-menu.js"></script>
+		
+		<!-- PWA Service Worker Registration -->
+		<script>
+			// PWA Service Worker 등록
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', async () => {
+					try {
+						const registration = await navigator.serviceWorker.register('/sw.js', {
+							scope: '/'
+						});
+						console.log('✅ ServiceWorker registered:', registration.scope);
+						
+						// 업데이트 체크
+						registration.addEventListener('updatefound', () => {
+							const newWorker = registration.installing;
+							console.log('🔄 New service worker found');
+							
+							newWorker.addEventListener('statechange', () => {
+								if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+									// 새 버전 사용 가능
+									if (confirm('새 버전이 있습니다. 업데이트하시겠습니까?')) {
+										window.location.reload();
+									}
+								}
+							});
+						});
+					} catch (err) {
+						console.error('❌ ServiceWorker registration failed:', err);
+					}
+				});
+			}
+			
+			// PWA 설치 프롬프트
+			let deferredPrompt;
+			window.addEventListener('beforeinstallprompt', (e) => {
+				e.preventDefault();
+				deferredPrompt = e;
+				console.log('💡 PWA 설치 가능');
+				
+				// 설치 버튼 표시 (선택사항)
+				showInstallPromotion();
+			});
+			
+			function showInstallPromotion() {
+				// 설치 배너 생성
+				const installBanner = document.createElement('div');
+				installBanner.className = 'install-banner';
+				installBanner.innerHTML = `
+					<div class="install-content">
+						<span class="install-icon">📱</span>
+						<span class="install-text">앱으로 설치하여 더 편리하게 사용하세요!</span>
+						<button class="btn btn-primary" id="install-btn">설치</button>
+						<button class="icon-btn" id="install-dismiss">✕</button>
+					</div>
+				`;
+				document.body.appendChild(installBanner);
+				
+				document.getElementById('install-btn').addEventListener('click', async () => {
+					if (deferredPrompt) {
+						deferredPrompt.prompt();
+						const { outcome } = await deferredPrompt.userChoice;
+						console.log(`User response: ${outcome}`);
+						deferredPrompt = null;
+						installBanner.remove();
+					}
+				});
+				
+				document.getElementById('install-dismiss').addEventListener('click', () => {
+					installBanner.remove();
+				});
+			}
+			
+			// PWA 설치 완료
+			window.addEventListener('appinstalled', () => {
+				console.log('✅ PWA가 설치되었습니다!');
+				deferredPrompt = null;
+			});
+		</script>
 	</body>
 	</html>
