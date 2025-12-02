@@ -1199,7 +1199,7 @@
   installBtn.textContent = '📱 앱 설치';
   installBtn.style.display = 'none';
   installBtn.style.position = 'fixed';
-  installBtn.style.bottom = '90px';
+  installBtn.style.bottom = '30px';
   installBtn.style.left = '24px';
   installBtn.style.zIndex = '40';
   document.body.appendChild(installBtn);
