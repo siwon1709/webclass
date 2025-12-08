@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>AI Mood Player</title>
+		
+		<!-- PWA Meta Tags -->
+		<meta name="description" content="얼굴 표정 감정 분석으로 맞춤 음악을 재생하는 AI Mood Player" />
+		<meta name="theme-color" content="#7c3aed" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Mood Player" />
+		
+		<!-- Manifest -->
+		<link rel="manifest" href="./manifest.json" />
+		
+		<!-- Apple Touch Icons -->
+		<link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152x152.png" />
+		<link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192x192.png" />
+		
+		<!-- Favicon -->
+		<link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-72x72.png" />
+		
+		<link rel="stylesheet" href="./styles.css" />
+		<meta name="description" content="얼굴 표정 감정 분석으로 맞춤 음악을 재생하는 AI Mood Player" />
+	</head>
+	<body>
+		<!-- Particle Background -->
+		<canvas id="particle-canvas"></canvas>
+
+		<!-- Top Navigation -->
+		<header class="navbar">
+			<div class="nav-left">
+				<a href="https://siwon1709.github.io/webclass/mothagetda/index.html#features" class="logo-link">
+					<div class="logo">🎵</div>
+				</a>
+				<div class="brand">
+					<div class="title">AI Mood Player</div>
+					<div class="caption">당신의 감정을 음악으로</div>
+				</div>
+				<nav class="menu desktop-menu">
+					<a href="#features">기능</a>
+					<a href="#how">작동 방식</a>
+				</nav>	
+			</div>
+			<div class="nav-right">
+				<button id="notifications-btn" class="btn btn-ghost icon-only" title="알림">
+					🔔<span id="notif-badge" class="badge hidden">0</span>
+				</button>
+				<button id="auth-open" class="btn btn-primary-glow">로그인/회원가입</button>
+				<button id="profile-btn" class="btn btn-ghost hidden">👤 프로필</button>
+				<button id="logout-btn" class="btn btn-tertiary hidden">로그아웃</button>
+				<button id="mobile-menu-btn" class="btn btn-ghost icon-only mobile-menu-btn">☰</button>
+			</div>
+		</header>
+
+		<!-- Mobile Menu Overlay -->
+		<div id="mobile-menu" class="mobile-menu hidden">
+			<div class="mobile-menu-header">
+				<div class="brand">
+					<div class="logo">🎵</div>
+					<div class="title">AI Mood Player</div>
+				</div>
+				<button id="mobile-menu-close" class="icon-btn">✕</button>
+			</div>
+			<nav class="mobile-menu-nav">
+				<a href="#features" class="mobile-menu-item">🎯 기능</a>
+				<a href="#how" class="mobile-menu-item">❓ 작동 방식</a>
+				<a href="#" class="mobile-menu-item" id="mobile-community">💬 커뮤니티</a>
+			</nav>
+			<div class="mobile-menu-actions">
+				<button id="mobile-auth" class="btn btn-primary-glow mobile-menu-btn">로그인/회원가입</button>
+				<button id="mobile-profile" class="btn btn-ghost mobile-menu-btn hidden">👤 프로필</button>
+				<button id="mobile-logout" class="btn btn-tertiary mobile-menu-btn hidden">로그아웃</button>
+			</div>
+		</div>
+
+		<!-- Hero -->
+		<section class="hero">
+			<h1>당신의 감정이 완벽한 플레이리스트를 만듭니다</h1>	
+			<p class="hero-sub">AI가 얼굴 표정을 분석하고 지금 이 순간에 딱 맞는 음악을 자동으로 추천해 드립니다.</p>
+			<div class="cta-row">
+				<button id="cta-upload" class="btn btn-primary-glow">사진 업로드</button>
+			</div>
+			<div class="features" id="features">
+				<div class="feature-card">
+					<div class="icon">⚡</div>
+					<div class="title">실시간 분석</div>
+					<div class="desc">사진 실시간 감정 분석</div>
+				</div>
+				<div class="feature-card">
+					<div class="icon">🎵</div>
+					<div class="title">Spotify 연동</div>
+					<div class="desc">수백만 곡 중 완벽 매칭</div>
+				</div>
+				<div class="feature-card">
+					<div class="icon">💙</div>
+					<div class="title">맞춤형 학습</div>
+					<div class="desc">취향을 학습하는 추천</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Main Panels -->
+		<main class="main container">
+			<div class="main-grid">
+				<!-- Left: Analysis Panel with tabs -->
+				<section class="card panel">
+					<div class="panel-header">
+						<div class="segmented mobile-segmented">
+							<button id="tab-upload" class="seg active">사진 업로드</button>
+						</div>
+					</div>
+
+					<!-- Upload Panel -->
+					<div class="panel-body panel-upload">
+						<div id="dropzone" class="dropzone">
+							<div class="drop-icon">⬆</div>
+							<div class="drop-title">사진을 여기에 드롭하세요</div>
+							<div class="drop-sub">또는 클릭하여 파일을 선택하세요 (JPG, PNG, GIF)</div>
+							<input type="file" id="image-input" accept="image/*" hidden />
+						</div>
+						<div id="preview" class="preview hidden">
+							<img id="preview-img" alt="미리보기" />
+						</div>
+						<div class="row mobile-row">
+							<button id="analyze-btn" class="btn primary">분석하기</button>
+							<button id="demo-btn" class="btn">테스트 모드</button>
+						</div>
+						<div class="tips">
+							<div class="tips-title">더 정확한 분석을 위한 팁</div>
+							<ul>
+								<li>얼굴이 정면으로 잘 보이는 사진을 사용하세요</li>
+								<li>밝은 조명에서 촬영하면 더 정확합니다</li>
+								<li>안경이나 마스크는 벗는 것이 좋아요</li>
+							</ul>
+						</div>
+						<p id="status" class="status"></p>
+					</div>
+				</section>
+
+				<!-- Right: Recommendation / Results -->
+				<section class="card panel" id="panel-reco">
+					<div class="panel-title">음악 추천</div>
+					<div class="result-box hidden" id="result-box">
+						<div class="result-line"><span class="label">감정:</span> <span id="emotion-text">-</span></div>
+						<div class="result-line"><span class="label">무드:</span> <span id="mood-text">-</span></div>
+						<div class="result-line"><span class="label">신뢰도:</span> <span id="confidence-text">-</span></div>
+					</div>
+					
+					<!-- Quote Card -->
+					<div class="quote-card hidden" id="quote-card">
+						<div class="quote-text" id="quote-text"></div>
+						<div class="quote-author" id="quote-author"></div>
+					</div>
+					
+					<div id="embed" class="embed placeholder">
+						<div class="placeholder-inner">
+							<div class="big-icon">대기중</div>
+							<div class="ph-desc">사진을 업로드하시면 당신의 감정에 맞는 <br>플레이리스트를 추천해드립니다.</div>
+						</div>
+					</div>
+					<div class="row mobile-row">
+						<button id="like-btn" class="btn btn-like">❤️ 좋아요</button>
+						<button id="share-btn" class="btn btn-ghost">🔗 공유하기</button>
+						<button id="skip" class="btn">다른 추천 보기</button>
+						<button id="reset-learning" class="btn btn-tertiary">학습 초기화</button>
+					</div>
+					<p class="hint">브라우저 정책상 자동 재생이 제한될 수 있습니다. 재생 버튼을 눌러주세요.</p>
+				</section>
+			</div>
+		</main>
+
+		<!-- How it works / Info -->
+		<section id="how" class="how container">
+			<div class="how-header">간단한 3단계</div>
+			<div class="how-grid">
+				<div class="how-card">
+					<div class="icon">📷</div>
+					<div class="title">사진 업로드</div>
+					<div class="desc">사진을 업로드하세요</div>
+				</div>
+				<div class="how-card">
+					<div class="icon">🤖</div>
+					<div class="title">AI 감정 분석</div>
+					<div class="desc">표정을 분석해 현재 상태를 파악합니다</div>
+				</div>
+				<div class="how-card">
+					<div class="icon">🎧</div>
+					<div class="title">맞춤 음악 추천</div>
+					<div class="desc">무드에 맞는 플레이리스트를 재생합니다</div>
+				</div>
+			</div>
+
+			<div class="system-grid">
+				<div class="sys-card"><div class="icon">💙</div><div class="title">취향 학습</div><div class="desc">좋아요/스킵으로 취향을 학습합니다</div></div>
+				<div class="sys-card"><div class="icon">📒</div><div class="title">감정 기록</div><div class="desc">시간대별 감정을 바탕으로 추천 향상</div></div>
+				<div class="sys-card"><div class="icon">⚡</div><div class="title">실시간 분석</div><div class="desc">업로드한 사진의 감정을 즉시 반영</div></div>
+				<div class="sys-card"><div class="icon">🎵</div><div class="title">Spotify 연동</div><div class="desc">내 기기에서 바로 재생</div></div>
+			</div>
+
+			<div class="api-note card">
+				<div class="api-title">API 연동 안내</div>
+				<ul>
+					<li><b>Spotify Web API:</b> 실제 곡 재생 및 선택형 미디어제어</li>
+					<li><b>Emotion Detection API:</b> 사진 분석 시 감정 분류(Face++)</li>
+					<li><b>face-api.js:</b> 브라우저 on-device 실시간 분석</li>
+				</ul>
+			</div>
+		</section>
+
+		<footer class="footer">
+			<p>Built with Spotify Embed & Web API, Face++ API (optional), face-api.js. 이 데모는 교육/개발 용도입니다.</p>
+		</footer>
+
+		<!-- Auth Modal: 로그인 / 회원가입 -->
+		<div id="auth-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="auth-title">
+			<div class="auth-card card" role="document">
+				<div class="auth-head">
+					<div class="auth-brand">
+						<div class="logo">🎵</div>
+						<div>
+							<div id="auth-title" class="auth-title">AI-Music-Mood-Player</div>
+							<div class="auth-sub">당신의 감정을 음악으로</div>
+						</div>
+					</div>
+					<button id="auth-close" class="icon-btn" aria-label="닫기">✕</button>
+				</div>
+				<div class="auth-tabs segmented">
+					<button id="auth-tab-login" class="seg active">로그인</button>
+					<button id="auth-tab-signup" class="seg">회원가입</button>
+				</div>
+				<div class="auth-body">
+					<!-- Login form -->
+					<form id="login-form" class="form" novalidate>
+						<label for="login-email">이메일</label>
+						<input id="login-email" type="email" placeholder="you@example.com" autocomplete="email" required />
+						<label for="login-password">비밀번호</label>
+						<input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+						<div class="row">
+							<button id="login-submit" type="submit" class="btn primary" style="flex:1">로그인</button>
+						</div>
+						<div class="auth-links">
+							<button type="button" class="text-link" id="goto-signup">회원가입</button>
+							<button type="button" class="text-link" id="forgot-pass">비밀번호 찾기</button>
+						</div>
+					</form>
+
+					<!-- Signup form -->
+					<form id="signup-form" class="form hidden" novalidate>
+						<label for="su-name">이름</label>
+						<input id="su-name" type="text" placeholder="홍길동" autocomplete="name" required />
+						<label for="su-email">이메일</label>
+						<input id="su-email" type="email" placeholder="you@example.com" autocomplete="email" required />
+						<label for="su-pass">비밀번호</label>
+						<input id="su-pass" type="password" placeholder="8자 이상" autocomplete="new-password" required />
+						<label for="su-pass2">비밀번호 확인</label>
+						<input id="su-pass2" type="password" placeholder="다시 입력" autocomplete="new-password" required />
+
+						<div class="consent card">
+							<div class="consent-head">개인정보 및 약관 동의</div>
+							<label class="checkbox-row">
+								<input id="consent-all" type="checkbox" />
+								<span>전체 동의</span>
+							</label>
+							<hr class="consent-sep" />
+							<div class="consent-items">
+								<label class="checkbox-row">
+									<input id="consent-tos" type="checkbox" data-required="true" />
+									<span>[필수] 서비스 이용약관</span>
+									<button type="button" class="text-link more" data-doc="tos">자세히 보기 ›</button>
+								</label>
+								<label class="checkbox-row">
+									<input id="consent-privacy" type="checkbox" data-required="true" />
+									<span>[필수] 개인정보 수집/이용</span>
+									<button type="button" class="text-link more" data-doc="privacy">자세히 보기 ›</button>
+								</label>
+								<label class="checkbox-row">
+									<input id="consent-marketing" type="checkbox" />
+									<span>[선택] 마케팅 정보 수신</span>
+									<button type="button" class="text-link more" data-doc="marketing">자세히 보기 ›</button>
+								</label>
+							</div>
+						</div>
+
+						<div class="row">
+							<button id="signup-submit" type="submit" class="btn primary" disabled style="flex:1">회원가입</button>
+						</div>
+						<div class="auth-links">
+							<button type="button" class="text-link" id="goto-login">이미 계정이 있으신가요? 로그인</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<!-- Terms Modal (optional detail) -->
+		<div id="terms-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="terms-title">
+			<div class="terms-card card" role="document">
+				<div class="auth-head">
+					<div>
+						<div id="terms-title" class="auth-title">자세히 보기</div>
+						<div class="auth-sub">약관/정책 전문</div>
+					</div>
+					<button id="terms-close" class="icon-btn" aria-label="닫기">✕</button>
+				</div>
+				<div class="terms-body" id="terms-body">
+					<p class="muted">샘플 텍스트입니다. 실제 서비스 적용 시 약관/개인정보 처리방침 전문을 삽입하세요.</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Profile Modal -->
+		<div id="profile-modal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="profile-title">
+			<div class="profile-card card" role="document">
+				<div class="auth-head">
+					<div>
+						<div id="profile-title" class="auth-title">내 프로필</div>
+						<div class="auth-sub">사용자 정보 및 활동 기록</div>
+					</div>
+					<button id="profile-close" class="icon-btn" aria-label="닫기">✕</button>
+				</div>
+				<div class="profile-body">
+					<div class="profile-info">
+						<div class="profile-avatar">👤</div>
+						<div class="profile-details">
+							<div class="profile-name" id="profile-name">사용자</div>
+							<div class="profile-email" id="profile-email">user@example.com</div>
+							<div id="mood-badge" class="mood-badge"></div>
+						</div>
+					</div>
+					
+					<!-- Music Mood Analysis Section -->
+					<div class="mood-analysis">
+						<div class="mood-analysis-header">
+							<span class="mood-analysis-icon">🎭</span>
+							<span class="mood-analysis-title">나의 음악 분위기</span>
+						</div>
+						<div id="mood-stats" class="mood-stats">
+							<p class="muted">분석할 데이터가 없습니다.</p>
+						</div>
+					</div>
+					
+					<!-- Recommended Playlist Section -->
+					<div class="recommended-playlist">
+						<div class="recommended-header">
+							<span class="recommended-icon">🎵</span>
+							<span class="recommended-title">당신을 위한 추천 플레이리스트</span>
+						</div>
+						<div id="recommended-embed" class="recommended-embed-container">
+							<p class="muted">분석 데이터를 기반으로 추천 플레이리스트가 표시됩니다.</p>
+						</div>
+					</div>
+					
+					<!-- Emotion History Timeline -->
+					<div class="emotion-timeline">
+						<div class="timeline-header">
+							<span class="timeline-icon">📊</span>
+							<span class="timeline-title">감정 기록 타임라인</span>
+						</div>
+						<div id="emotion-timeline-list" class="timeline-list">
+							<p class="muted">감정 분석 기록이 없습니다.</p>
+						</div>
+					</div>
+					
+					<div class="profile-tabs segmented">
+						<button class="seg active" id="profile-tab-played">재생한 곡</button>
+						<button class="seg" id="profile-tab-liked">좋아요</button>
+					</div>
+					
+					<div id="profile-played-list" class="profile-list">
+						<!-- Dynamic content -->
+					</div>
+					
+					<div id="profile-liked-list" class="profile-list hidden">
+						<!-- Dynamic content -->
+					</div>
+					
+					<!-- 회원탈퇴 버튼 -->
+					<button class="btn btn-danger" id="delete-account-btn" style="width: 100%; margin-top: 16px;">
+						회원탈퇴
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Delete Account Modal -->
+		<div id="delete-account-modal" class="modal" aria-hidden="true">
+			<div class="auth-card" style="max-width: 450px;">
+				<div class="auth-head">
+					<div class="auth-brand">
+						<span class="auth-title">⚠️ 회원탈퇴</span>
+					</div>
+					<button class="icon-btn" id="delete-account-close" aria-label="닫기">✕</button>
+				</div>
+				<div class="auth-body">
+					<p style="margin-bottom: 16px; color: var(--danger); font-weight: 700;">
+						정말로 탈퇴하시겠습니까?
+					</p>
+					<p style="margin-bottom: 20px; color: var(--muted); font-size: 14px;">
+						• 모든 개인정보는 즉시 파기됩니다<br>
+						• 재생 기록, 좋아요 목록이 모두 삭제됩니다<br>
+						• 감정 분석 기록이 모두 삭제됩니다<br>
+						• 알림 내역이 모두 삭제됩니다<br>
+						<strong>이 작업은 되돌릴 수 없습니다.</strong>
+					</p>
+					
+					<div class="consent" style="margin-bottom: 16px;">
+						<div class="checkbox-row">
+							<input type="checkbox" id="delete-confirm-check">
+							<label for="delete-confirm-check" style="margin: 0; cursor: pointer; color: var(--text);">
+								위 내용을 모두 확인했으며, 회원탈퇴에 동의합니다.
+							</label>
+						</div>
+					</div>
+					
+					<div class="row" style="gap: 8px;">
+						<button class="btn btn-ghost" id="delete-cancel" style="flex: 1;">취소</button>
+						<button class="btn btn-danger" id="delete-confirm" disabled style="flex: 1;">회원탈퇴</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Notifications Dropdown -->
+		<div id="notifications-dropdown" class="notif-dropdown hidden">
+			<div class="notif-header">
+				<span class="notif-title">알림</span>
+				<button id="clear-notifs" class="text-link">모두 지우기</button>
+			</div>
+			<div id="notif-list" class="notif-list">
+				<p class="muted" style="padding: 12px; text-align: center;">새 알림이 없습니다.</p>
+			</div>
+		</div>
+
+		<!-- Toast Container -->
+		<div id="toast-container" class="toast-container"></div>
+
+		<!-- Help Button -->
+		<button class="help-btn" id="help-btn" title="분석 정보">ℹ️</button>
+
+		<!-- Info Modal -->
+		<div id="info-modal" class="info-modal" aria-hidden="true">
+			<div class="info-card">
+				<div class="info-header">
+					<span class="info-icon">🔬</span>
+					<span class="info-title">감정 분석 안내</span>
+				</div>
+				
+				<div class="info-section">
+					<div class="info-section-title">분석 정확도</div>
+					<ul class="info-list">
+						<li>Face++ AI 기술을 사용하여 얼굴 표정을 분석합니다</li>
+						<li>평균 85-90%의 정확도로 7가지 주요 감정을 인식합니다</li>
+						<li>조명, 각도, 표정의 명확도에 따라 결과가 달라질 수 있습니다</li>
+					</ul>
+				</div>	
+				
+				<div class="info-section">
+					<div class="info-section-title">개인정보 보호</div>
+					<ul class="info-list">
+						<li>업로드된 사진은 분석 후 즉시 삭제됩니다</li>
+						<li>분석 결과는 로컬 저장소에만 저장됩니다</li>
+						<li>제3자와 데이터를 공유하지 않습니다</li>
+						<li>언제든지 브라우저 저장소를 삭제할 수 있습니다</li>
+					</ul>
+				</div>
+				
+				<div class="info-section">
+					<div class="info-section-title">더 정확한 분석을 위한 팁</div>
+					<ul class="info-list">
+						<li>얼굴이 정면으로 잘 보이는 사진 사용</li>
+						<li>밝은 조명에서 촬영된 사진 권장</li>
+						<li>안경, 마스크 등 얼굴을 가리는 물체 제거</li>
+						<li>자연스러운 표정이 가장 정확합니다</li>
+					</ul>
+				</div>
+				
+				<button class="btn btn-primary-glow info-close-btn" id="info-close">확인</button>
+			</div>
+		</div>
+
+		<script src="./config.js"></script>
+		<script src="./particles.js"></script>
+		<script src="./app.js"></script>
+		<script src="./mobile-menu.js"></script>
+		
+		<!-- PWA Service Worker Registration -->
+		<script>
+			// PWA Service Worker 등록
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', async () => {
+					try {
+						const registration = await navigator.serviceWorker.register('/sw.js', {
+							scope: '/'
+						});
+						console.log('✅ ServiceWorker registered:', registration.scope);
+						
+						// 업데이트 체크
+						registration.addEventListener('updatefound', () => {
+							const newWorker = registration.installing;
+							console.log('🔄 New service worker found');
+							
+							newWorker.addEventListener('statechange', () => {
+								if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+									// 새 버전 사용 가능
+									if (confirm('새 버전이 있습니다. 업데이트하시겠습니까?')) {
+										window.location.reload();
+									}
+								}
+							});
+						});
+					} catch (err) {
+						console.error('❌ ServiceWorker registration failed:', err);
+					}
+				});
+			}
+			
+			// PWA 설치 프롬프트
+			let deferredPrompt;
+			window.addEventListener('beforeinstallprompt', (e) => {
+				e.preventDefault();
+				deferredPrompt = e;
+				console.log('💡 PWA 설치 가능');
+				
+				// 설치 버튼 표시 (선택사항)
+				showInstallPromotion();
+			});
+			
+			function showInstallPromotion() {
+				// 설치 배너 생성
+				const installBanner = document.createElement('div');
+				installBanner.className = 'install-banner';
+				installBanner.innerHTML = `
+					<div class="install-content">
+						<span class="install-icon">📱</span>
+						<span class="install-text">앱으로 설치하여 더 편리하게 사용하세요!</span>
+						<button class="btn btn-primary" id="install-btn">설치</button>
+						<button class="icon-btn" id="install-dismiss">✕</button>
+					</div>
+				`;
+				document.body.appendChild(installBanner);
+				
+				document.getElementById('install-btn').addEventListener('click', async () => {
+					if (deferredPrompt) {
+						deferredPrompt.prompt();
+						const { outcome } = await deferredPrompt.userChoice;
+						console.log(`User response: ${outcome}`);
+						deferredPrompt = null;
+						installBanner.remove();
+					}
+				});
+				
+				document.getElementById('install-dismiss').addEventListener('click', () => {
+					installBanner.remove();
+				});
+			}
+			
+			// PWA 설치 완료
+			window.addEventListener('appinstalled', () => {
+				console.log('✅ PWA가 설치되었습니다!');
+				deferredPrompt = null;
+			});
+		</script>
+	</body>
+	</html>
