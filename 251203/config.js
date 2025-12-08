@@ -6,8 +6,8 @@ window.APP_CONFIG = {
     redirectUri: window.location.origin + window.location.pathname,
   },
   facepp: {
-    key: "Pq9lHpOm02Bb2Dbh-ExsPS6Phc2LMYkD",
-    secret: "_RX1WqgNdgQo--Xvsh8wZsJfuNGhxmNV",
+    key: "YOUR_CLIENT_ID",
+    secret: "YOUR_Secret_CLIENT_ID",
     endpoint: "https://api-us.faceplusplus.com/facepp/v3/detect"
   },
   realtime: {
@@ -18,3 +18,4 @@ window.APP_CONFIG = {
     smoothingWindow: 5
   }
 };
+
