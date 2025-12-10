@@ -195,6 +195,104 @@ section h2 {
     background-color: #764ba2;
 }
 
+/* 강점과 역량 섹션 */
+.strengths-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.strength-card {
+    background-color: #f8f9fa;
+    padding: 30px 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.strength-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.strength-card h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.strength-card ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
+
+.strength-card li {
+    color: #666;
+    line-height: 1.8;
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.strength-card li:before {
+    content: "▪";
+    color: #667eea;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+/* 목표와 비전 섹션 */
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.goal-card {
+    background-color: #f8f9fa;
+    padding: 30px 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.goal-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.goal-card h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.goal-card ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
+
+.goal-card li {
+    color: #666;
+    line-height: 1.8;
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.goal-card li:before {
+    content: "✓";
+    color: #667eea;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
 /* 푸터 */
 footer {
     background-color: #333;
